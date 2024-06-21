@@ -115,6 +115,10 @@ from acdc.TLACDCExperiment import TLACDCExperiment
 from acdc.acdc_utils import (
     kl_divergence,
 )
+from acdc.hybridretrieval.utils import (
+    get_all_hybrid_retrieval_things,
+    get_gpt2_small
+)
 from acdc.ioi.utils import (
     get_all_ioi_things,
     get_gpt2_small,
@@ -145,7 +149,7 @@ torch.autograd.set_grad_enabled(False)
 parser = argparse.ArgumentParser(description="Used to launch ACDC runs. Only task and threshold are required")
 
 
-task_choices = ['ioi', 'docstring', 'induction', 'tracr-reverse', 'tracr-proportion', 'greaterthan', 'or_gate']
+task_choices = ['ioi', 'docstring', 'induction', 'tracr-reverse', 'tracr-proportion', 'greaterthan', 'or_gate', 'hybrid-retrieval']
 parser.add_argument('--task', type=str, required=True, choices=task_choices, help=f'Choose a task from the available options: {task_choices}')
 parser.add_argument('--threshold', type=float, required=True, help='Value for THRESHOLD')
 parser.add_argument('--first-cache-cpu', type=str, required=False, default="True", help='Value for FIRST_CACHE_CPU (the old name for the `online_cache`)')
@@ -173,9 +177,9 @@ if ipython is not None:
     # We are in a notebook
     # you can put the command you would like to run as the ... in r"""..."""
     args = parser.parse_args(
-        [line.strip() for line in r"""--task=induction\
+        [line.strip() for line in r"""--task=hybrid-retrieval\
 --zero-ablation\
---threshold=0.71\
+--threshold=0.0575\
 --indices-mode=reverse\
 --first-cache-cpu=False\
 --second-cache-cpu=False\
@@ -281,6 +285,11 @@ elif TASK == "greaterthan":
     things = get_all_greaterthan_things(
         num_examples=num_examples, metric_name=args.metric, device=DEVICE
     )
+elif TASK == "hybrid-retrieval":
+    num_examples = 20
+    things = get_all_hybrid_retrieval_things(
+    num_examples=num_examples, device=DEVICE, metric_name="kl_div"
+)
 else:
     raise ValueError(f"Unknown task {TASK}")
 
@@ -367,13 +376,13 @@ for i in range(args.max_num_epochs):
 
     show(
         exp.corr,
-        f"ims/img_new_{i+1}.png",
+        f"acdc/ims_hybridretrieval_kl_100000/img_new_{i+1}.png",
         show_full_index=False,
     )
 
     if IN_COLAB or ipython is not None:
         # so long as we're not running this as a script, show the image!
-        display(Image(f"ims/img_new_{i+1}.png"))
+        display(Image(f"acdc/ims_hybridretrieval_kl_100000/img_new_{i+1}.png"))
 
     print(i, "-" * 50)
     print(exp.count_no_edges())
