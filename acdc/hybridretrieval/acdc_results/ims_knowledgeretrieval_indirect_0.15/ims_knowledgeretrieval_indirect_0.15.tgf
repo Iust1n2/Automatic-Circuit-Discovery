@@ -1,0 +1,18 @@
+<resid_post> <resid_post> 
+<m11> <m11> 
+<m10> <m10> 
+<m0> <m0> 
+<a0.10> <a0.10> 
+<a0.6> <a0.6> 
+embed embed 
+<a0.10_v> <a0.10_v> 
+#
+<m11> <resid_post>
+<m10> <resid_post>
+<m0> <m11>
+<m0> <m10>
+<a0.10> <m0>
+<a0.6> <m0>
+embed <m0>
+embed <a0.10_v>
+<a0.10_v> <a0.10>

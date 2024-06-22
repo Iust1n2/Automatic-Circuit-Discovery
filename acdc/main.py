@@ -7,7 +7,16 @@
 #
 # <h3>Setup:</h3>
 # <p>Janky code to do different setup when run in a Colab notebook vs VSCode (adapted from e.g <a href="https://github.com/neelnanda-io/TransformerLens/blob/5c89b7583e73ce96db5e46ef86a14b15f303dde6/demos/Activation_Patching_in_TL_Demo.ipynb">this notebook</a>)</p>
+import sys
+import os
+# # Add the project directory to the PYTHONPATH
+# project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+# sys.path.insert(0, project_path)
 
+os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery')
+
+# # # Add the project root directory to the Python path
+sys.path.insert(0, os.getcwd())
 #%%
 try:
     import google.colab
@@ -179,7 +188,7 @@ if ipython is not None:
     args = parser.parse_args(
         [line.strip() for line in r"""--task=hybrid-retrieval\
 --zero-ablation\
---threshold=0.0575\
+--threshold=0.7\
 --indices-mode=reverse\
 --first-cache-cpu=False\
 --second-cache-cpu=False\
@@ -230,68 +239,73 @@ SINGLE_STEP = True if args.single_step else False
 
 #%%
 
+num_examples = 20
+things = get_all_hybrid_retrieval_things(
+    num_examples=num_examples, device=DEVICE, metric_name="kl_div"
+)
+
 second_metric = None  # some tasks only have one metric
 use_pos_embed = TASK.startswith("tracr")
 
-if TASK == "ioi":
-    num_examples = 100
-    things = get_all_ioi_things(
-        num_examples=num_examples, device=DEVICE, metric_name=args.metric
-    )
-elif TASK == "or_gate":
-    num_examples = 1
-    seq_len = 1
+# if TASK == "ioi":
+#     num_examples = 100
+#     things = get_all_ioi_things(
+#         num_examples=num_examples, device=DEVICE, metric_name=args.metric
+#     )
+# elif TASK == "or_gate":
+#     num_examples = 1
+#     seq_len = 1
 
-    things = get_all_logic_gate_things(
-        mode="OR",
-        num_examples=num_examples,
-        seq_len=seq_len,
-        device=DEVICE,
-    )
-elif TASK == "tracr-reverse":
-    num_examples = 6
-    things = get_all_tracr_things(
-        task="reverse",
-        metric_name=args.metric,
-        num_examples=num_examples,
-        device=DEVICE,
-    )
-elif TASK == "tracr-proportion":
-    num_examples = 50
-    things = get_all_tracr_things(
-        task="proportion",
-        metric_name=args.metric,
-        num_examples=num_examples,
-        device=DEVICE,
-    )
-elif TASK == "induction":
-    num_examples = 10 if IN_COLAB else 50
-    seq_len = 300
-    things = get_all_induction_things(
-        num_examples=num_examples, seq_len=seq_len, device=DEVICE, metric=args.metric
-    )
-elif TASK == "docstring":
-    num_examples = 50
-    seq_len = 41
-    things = get_all_docstring_things(
-        num_examples=num_examples,
-        seq_len=seq_len,
-        device=DEVICE,
-        metric_name=args.metric,
-        correct_incorrect_wandb=True,
-    )
-elif TASK == "greaterthan":
-    num_examples = 100
-    things = get_all_greaterthan_things(
-        num_examples=num_examples, metric_name=args.metric, device=DEVICE
-    )
-elif TASK == "hybrid-retrieval":
-    num_examples = 20
-    things = get_all_hybrid_retrieval_things(
-    num_examples=num_examples, device=DEVICE, metric_name="kl_div"
-)
-else:
-    raise ValueError(f"Unknown task {TASK}")
+#     things = get_all_logic_gate_things(
+#         mode="OR",
+#         num_examples=num_examples,
+#         seq_len=seq_len,
+#         device=DEVICE,
+#     )
+# elif TASK == "tracr-reverse":
+#     num_examples = 6
+#     things = get_all_tracr_things(
+#         task="reverse",
+#         metric_name=args.metric,
+#         num_examples=num_examples,
+#         device=DEVICE,
+#     )
+# elif TASK == "tracr-proportion":
+#     num_examples = 50
+#     things = get_all_tracr_things(
+#         task="proportion",
+#         metric_name=args.metric,
+#         num_examples=num_examples,
+#         device=DEVICE,
+#     )
+# elif TASK == "induction":
+#     num_examples = 10 if IN_COLAB else 50
+#     seq_len = 300
+#     things = get_all_induction_things(
+#         num_examples=num_examples, seq_len=seq_len, device=DEVICE, metric=args.metric
+#     )
+# elif TASK == "docstring":
+#     num_examples = 50
+#     seq_len = 41
+#     things = get_all_docstring_things(
+#         num_examples=num_examples,
+#         seq_len=seq_len,
+#         device=DEVICE,
+#         metric_name=args.metric,
+#         correct_incorrect_wandb=True,
+#     )
+# elif TASK == "greaterthan":
+#     num_examples = 100
+#     things = get_all_greaterthan_things(
+#         num_examples=num_examples, metric_name=args.metric, device=DEVICE
+#     )
+# elif TASK == "hybrid-retrieval":
+#     num_examples = 20
+#     things = get_all_hybrid_retrieval_things(
+#     num_examples=num_examples, device=DEVICE, metric_name="kl_div"
+# )
+# else:
+#     raise ValueError(f"Unknown task {TASK}")
 
 
 #%% [markdown]
@@ -370,38 +384,46 @@ exp = TLACDCExperiment(
 
 import datetime
 exp_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+start_time = datetime.datetime.now()  # Record the start time
+
+# Define the save path
+save_path = "acdc/hybridretrieval/acdc_results/ims_join_direct_0.15"
 
 for i in range(args.max_num_epochs):
     exp.step(testing=False)
 
     show(
         exp.corr,
-        f"acdc/ims_hybridretrieval_kl_100000/img_new_{i+1}.png",
+        f"{save_path}/img_new_{i+1}.png",
         show_full_index=False,
     )
 
     if IN_COLAB or ipython is not None:
         # so long as we're not running this as a script, show the image!
-        display(Image(f"acdc/ims_hybridretrieval_kl_100000/img_new_{i+1}.png"))
+        display(Image(f"{save_path}/img_new_{i+1}.png"))
 
     print(i, "-" * 50)
     print(exp.count_no_edges())
 
     if i == 0:
-        exp.save_edges("edges.pkl")
+        exp.save_edges(f"{save_path}/edges.pkl")
 
     if exp.current_node is None or SINGLE_STEP:
         show(
             exp.corr,
-            f"ims/ACDC_img_{exp_time}.png",
+            f"{save_path}/ACDC_img_{exp_time}.png",
 
         )
         break
 
-exp.save_edges("another_final_edges.pkl")
+# Calculate elapsed time
+elapsed_time = datetime.datetime.now() - start_time
+print(f"Elapsed time: {elapsed_time}")
+
+exp.save_edges(f"{save_path}/another_final_edges.pkl")
 
 if USING_WANDB:
-    edges_fname = f"edges.pth"
+    edges_fname = f"{save_path}//edges.pth"
     exp.save_edges(edges_fname)
     artifact = wandb.Artifact(edges_fname, type="dataset")
     artifact.add_file(edges_fname)

@@ -1,0 +1,86 @@
+1 <a11.8>
+2 <resid_post>
+3 <a11.0>
+4 <m10>
+5 <m0>
+6 <a11.8_v>
+7 <a1.10_k>
+8 <a1.10>
+9 <a11.0_v>
+10 <a0.8>
+11 <a1.10_v>
+12 <a0.7>
+13 <a0.6>
+14 <a2.10>
+15 <a0.11>
+16 <a0.9>
+17 <a0.4>
+18 <a0.3>
+19 embed
+20 <a0.11_v>
+21 <a0.9_v>
+22 <a0.8_v>
+23 <a0.2>
+24 <a0.9_k>
+25 <a0.4_v>
+26 <m11>
+27 <a0.10>
+28 <a0.10_v>
+29 <m2>
+30 <m1>
+31 <a0.6_v>
+32 <a0.5>
+#
+1 2 purple
+1 6 purple
+2 3 purple
+2 4 black
+2 5 purple
+2 26 yellow
+3 9 purple
+4 5 black
+4 14 red
+4 15 purple
+4 16 red
+4 17 purple
+4 18 red
+4 19 purple
+4 29 blue
+5 6 purple
+5 7 red
+5 12 purple
+5 13 black
+5 15 purple
+5 19 black
+5 26 yellow
+5 27 green
+5 9 blue
+5 29 blue
+5 30 blue
+5 10 blue
+6 8 purple
+7 8 purple
+7 16 blue
+7 32 blue
+8 11 purple
+9 10 purple
+9 12 red
+9 13 purple
+10 11 purple
+10 22 purple
+11 16 purple
+11 19 purple
+11 23 purple
+13 31 blue
+14 29 blue
+15 20 purple
+16 21 purple
+16 24 red
+17 25 red
+19 20 purple
+19 21 purple
+19 22 purple
+19 28 green
+19 31 blue
+27 28 green
+29 30 blue

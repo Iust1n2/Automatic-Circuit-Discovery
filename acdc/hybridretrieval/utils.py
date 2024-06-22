@@ -17,7 +17,7 @@ import IPython
 from acdc.acdc_utils import MatchNLLMetric, frac_correct_metric, logit_diff_metric, kl_divergence, negative_log_probs
 import torch
 from acdc.docstring.utils import AllDataThings
-from acdc.hybridretrieval.hybrid_retrieval_dataset4 import HybridRetrievalDataset  # NOTE: we now import this LOCALLY so it is deterministic
+from acdc.hybridretrieval.hybrid_retrieval_dataset3direct import HybridRetrievalDataset  # NOTE: we now import this LOCALLY so it is deterministic
 from tqdm import tqdm
 import wandb
 from transformer_lens.HookedTransformer import HookedTransformer
@@ -64,41 +64,47 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
     print("\nCorrupted Data Datasets:")
     print(corrupted_data)
 
-    # Define sequence length and number of examples
-    seq_len = 25
-    # seq_len = clean_data.shape[1]
-    assert seq_len == 25, f"Well, I thought Hybrid-Retrieval was 16 not {seq_len} tokens long..."
+    # works with unproper tokenization
+    # # Define sequence length and number of examples
+    # seq_len = 25
+    # # seq_len = clean_data.shape[1]
+    # assert seq_len == 25, f"Well, I thought Hybrid-Retrieval was 16 not {seq_len} tokens long..."
 
-    # Create the validation and test splits
-    default_data = clean_data[:num_examples*2, :seq_len - 1].to(device)
-    patch_data = corrupted_data[:num_examples*2, :seq_len - 1].to(device)
-    labels = clean_data[:num_examples*2, seq_len - 1].to(device)
-    wrong_labels = torch.as_tensor(corrupted_data[:num_examples*2, seq_len - 1], dtype=torch.long, device=device)
+    # # Create the validation and test splits
+    # default_data = clean_data[:num_examples*2, :seq_len - 1].to(device)
+    # patch_data = corrupted_data[:num_examples*2, :seq_len - 1].to(device)
+    # labels = clean_data[:num_examples*2, seq_len - 1].to(device)
+    # wrong_labels = torch.as_tensor(corrupted_data[:num_examples*2, seq_len - 1], dtype=torch.long, device=device)
 
-    # Split into validation and test sets
-    validation_data = default_data[:num_examples, :]
-    validation_patch_data = patch_data[:num_examples, :]
-    validation_labels = labels[:num_examples]
-    validation_wrong_labels = wrong_labels[:num_examples]
+    # # Split into validation and test sets
+    # validation_data = default_data[:num_examples, :]
+    # validation_patch_data = patch_data[:num_examples, :]
+    # validation_labels = labels[:num_examples]
+    # validation_wrong_labels = wrong_labels[:num_examples]
 
-    test_data = default_data[:num_examples, :]
-    test_patch_data = patch_data[:num_examples, :]
-    test_labels = labels[:num_examples]
-    test_wrong_labels = wrong_labels[:num_examples]
+    # test_data = default_data[:num_examples, :]
+    # test_patch_data = patch_data[:num_examples, :]
+    # test_labels = labels[:num_examples]
+    # test_wrong_labels = wrong_labels[:num_examples]
+
+    validation_data = clean_data[:num_examples, :]
+    validation_patch_data = corrupted_data[:num_examples, :]
+    test_data = clean_data[:num_examples, :]
+    test_patch_data = corrupted_data[:num_examples, :]
 
     # Print shapes for verification
     print(f"Shape of validation_data: {validation_data.shape}")
     print(f"Shape of validation_patch_data: {validation_patch_data.shape}")
-    print(f"Shape of validation_labels: {validation_labels.shape}")
-    print(f"Shape of validation_wrong_labels: {validation_wrong_labels.shape}")
+    # print(f"Shape of validation_labels: {validation_labels.shape}")
+    # print(f"Shape of validation_wrong_labels: {validation_wrong_labels.shape}")
 
     print(f"Shape of test_data: {test_data.shape}")
     print(f"Shape of test_patch_data: {test_patch_data.shape}")
-    print(f"Shape of test_labels: {test_labels.shape}")
-    print(f"Shape of test_wrong_labels: {test_wrong_labels.shape}")
+    # print(f"Shape of test_labels: {test_labels.shape}")
+    # print(f"Shape of test_wrong_labels: {test_wrong_labels.shape}")
 
     with torch.no_grad():
-        base_model_logits = tl_model(default_data)[:, -1, :]
+        base_model_logits = tl_model(clean_data)[:, -1, :]
         base_model_logprobs = F.log_softmax(base_model_logits, dim=-1)
 
     base_validation_logprobs = base_model_logprobs[:num_examples, :]
@@ -107,8 +113,8 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
     if metric_name == "logit_diff":
         validation_metric = partial(
                 logit_diff_metric,
-                correct_labels=validation_labels,
-                wrong_labels=validation_wrong_labels,
+                correct_labels=None, # put none here instead of validation_labels
+                wrong_labels=None, # put none here instead of validation_wrong_labels
             )
     elif metric_name == "kl_div":
         validation_metric = partial(
@@ -130,23 +136,21 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
         ),
         "logit_diff": partial(
             logit_diff_metric,
-            correct_labels=test_labels,
-            wrong_labels=test_wrong_labels,
+            correct_labels=None, # put none here instead of test_labels,
+            wrong_labels=None, # put none here instead of test_wrong_labels,
         )
     }
-    
-
     
     return AllDataThings(
         tl_model=tl_model,
         validation_data=validation_data,
         validation_metric=validation_metric,
-        validation_labels=validation_labels,
+        validation_labels=None,  # put none here instead of validation_labels
         validation_mask=None,
         validation_patch_data=validation_patch_data,
         test_metrics=test_metrics,
         test_data=test_data,
-        test_labels=test_labels,
+        test_labels=None, # put none here instead of test)labels
         test_mask=None,
         test_patch_data=test_patch_data
     )
