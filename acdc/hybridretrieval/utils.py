@@ -17,7 +17,7 @@ import IPython
 from acdc.acdc_utils import MatchNLLMetric, frac_correct_metric, logit_diff_metric, kl_divergence, negative_log_probs
 import torch
 from acdc.docstring.utils import AllDataThings
-from acdc.hybridretrieval.hybrid_retrieval_dataset3direct import HybridRetrievalDataset  # NOTE: we now import this LOCALLY so it is deterministic
+from acdc.hybridretrieval.datasets.join_direct import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
 from tqdm import tqdm
 import wandb
 from transformer_lens.HookedTransformer import HookedTransformer
@@ -57,35 +57,12 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
     clean_data = clean_data.to(device)
     corrupted_data = corrupted_data.to(device)
 
-    # Print the tokenized datasets for verification
+    # Print the tensor for verification
     print("Clean Data Datasets:")
     print(clean_data)
 
     print("\nCorrupted Data Datasets:")
     print(corrupted_data)
-
-    # works with unproper tokenization
-    # # Define sequence length and number of examples
-    # seq_len = 25
-    # # seq_len = clean_data.shape[1]
-    # assert seq_len == 25, f"Well, I thought Hybrid-Retrieval was 16 not {seq_len} tokens long..."
-
-    # # Create the validation and test splits
-    # default_data = clean_data[:num_examples*2, :seq_len - 1].to(device)
-    # patch_data = corrupted_data[:num_examples*2, :seq_len - 1].to(device)
-    # labels = clean_data[:num_examples*2, seq_len - 1].to(device)
-    # wrong_labels = torch.as_tensor(corrupted_data[:num_examples*2, seq_len - 1], dtype=torch.long, device=device)
-
-    # # Split into validation and test sets
-    # validation_data = default_data[:num_examples, :]
-    # validation_patch_data = patch_data[:num_examples, :]
-    # validation_labels = labels[:num_examples]
-    # validation_wrong_labels = wrong_labels[:num_examples]
-
-    # test_data = default_data[:num_examples, :]
-    # test_patch_data = patch_data[:num_examples, :]
-    # test_labels = labels[:num_examples]
-    # test_wrong_labels = wrong_labels[:num_examples]
 
     validation_data = clean_data[:num_examples, :]
     validation_patch_data = corrupted_data[:num_examples, :]

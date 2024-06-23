@@ -13,7 +13,7 @@ import os
 # project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 # sys.path.insert(0, project_path)
 
-os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery')
+os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery') # change to the root dir of the project
 
 # # # Add the project root directory to the Python path
 sys.path.insert(0, os.getcwd())
@@ -158,7 +158,7 @@ torch.autograd.set_grad_enabled(False)
 parser = argparse.ArgumentParser(description="Used to launch ACDC runs. Only task and threshold are required")
 
 
-task_choices = ['ioi', 'docstring', 'induction', 'tracr-reverse', 'tracr-proportion', 'greaterthan', 'or_gate', 'hybrid-retrieval']
+task_choices = ['ioi', 'docstring', 'induction', 'tracr-reverse', 'tracr-proportion', 'greaterthan', 'or_gate', 'hybrid-retrieval'] # include hybridretrieval in the list of task choices
 parser.add_argument('--task', type=str, required=True, choices=task_choices, help=f'Choose a task from the available options: {task_choices}')
 parser.add_argument('--threshold', type=float, required=True, help='Value for THRESHOLD')
 parser.add_argument('--first-cache-cpu', type=str, required=False, default="True", help='Value for FIRST_CACHE_CPU (the old name for the `online_cache`)')
@@ -247,6 +247,7 @@ things = get_all_hybrid_retrieval_things(
 second_metric = None  # some tasks only have one metric
 use_pos_embed = TASK.startswith("tracr")
 
+# commented code for other tasks
 # if TASK == "ioi":
 #     num_examples = 100
 #     things = get_all_ioi_things(
