@@ -2,6 +2,7 @@ import networkx as nx
 import os 
 
 os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery/acdc/')
+
 def read_adjacency_list(file_path):
     edges = []
     reading_edges = False
@@ -22,48 +23,55 @@ def add_edges_to_graph(graph, edges, graph_label):
         else:
             graph.add_edge(node1, node2, graphs={graph_label})
 
-def get_edge_color(graphs):
+        # Track node memberships
+        if 'graphs' not in graph.nodes[node1]:
+            graph.nodes[node1]['graphs'] = set()
+        graph.nodes[node1]['graphs'].add(graph_label)
+
+        if 'graphs' not in graph.nodes[node2]:
+            graph.nodes[node2]['graphs'] = set()
+        graph.nodes[node2]['graphs'].add(graph_label)
+
+def get_color(item, color_map):
+    return color_map.get(frozenset(item), 'grey')
+
+def write_tgf(graph, tgf_file):
     color_map = {
         frozenset({'J'}): 'red',
         frozenset({'K'}): 'yellow',
-        frozenset({'KJ'}): 'blue',
+        frozenset({'M'}): 'blue',
         frozenset({'J', 'K'}): 'orange',
-        frozenset({'J', 'KJ'}): 'purple',
-        frozenset({'K', 'KJ'}): 'green',
-        frozenset({'J', 'K', 'KJ'}): 'black'
+        frozenset({'J', 'M'}): 'purple',
+        frozenset({'K', 'M'}): 'green',
+        frozenset({'J', 'K', 'M'}): 'cyan'
     }
-    return color_map.get(frozenset(graphs), 'grey')
 
-def write_tgf(graph, tgf_file):
     with open(tgf_file, 'w') as f:
-        node_ids = {node: idx + 1 for idx, node in enumerate(graph.nodes())}
-
-        # Write nodes
-        for node, node_id in node_ids.items():
-            f.write(f"{node_id} {node}\n")
+        # Write nodes with colors
+        for node in graph.nodes:
+            node_color = get_color(graph.nodes[node]['graphs'], color_map)
+            f.write(f"{node} {node_color}\n")
 
         # Write delimiter
         f.write("#\n")
 
-        # Write edges
+        # Write edges with colors
         for node1, node2, data in graph.edges(data=True):
-            source = node_ids[node1]
-            target = node_ids[node2]
-            edge_color = get_edge_color(data['graphs'])
-            f.write(f"{source} {target} {edge_color}\n")
+            edge_color = get_color(data['graphs'], color_map)
+            f.write(f"{node1} {node2} {edge_color}\n")
 
 # Read graphs from files
-edges1 = read_adjacency_list('ims_join_direct_0.15/ims_join_direct.tgf')
-edges2 = read_adjacency_list('ims_knowledgeretrieval_direct_0.15/ims_knowledgeretrieval_direct.tgf')
-edges3 = read_adjacency_list('ims_hybridretrieval_direct_0.15/ims_hybridretrieval_direct.tgf')
+edges1 = read_adjacency_list('hybridretrieval/acdc_results/ims_hybridretrieval_indirect_0.15/ims_hybridretrieval_indirect.tgf')
+edges2 = read_adjacency_list('hybridretrieval/acdc_results/ims_join_indirect_0.15/ims_join_indirect_0.15.tgf')
+edges3 = read_adjacency_list('hybridretrieval/acdc_results/ims_knowledgeretrieval_indirect_0.15/ims_knowledgeretrieval_indirect_0.15.tgf')
 
 # Create a unified graph
-G = nx.Graph()
+G = nx.DiGraph()
 
 # Add edges from each graph to the unified graph
 add_edges_to_graph(G, edges1, 'J')
 add_edges_to_graph(G, edges2, 'K')
-add_edges_to_graph(G, edges3, 'KJ')
+add_edges_to_graph(G, edges3, 'M')
 
 # Write the unified graph to a TGF file
-write_tgf(G, 'hybridretrieval/combined_tgf/combined_graph_direct_color_labels.tgf')
+write_tgf(G, 'hybridretrieval/combined_tgf/combined_graph_indirect_color_labels.tgf')

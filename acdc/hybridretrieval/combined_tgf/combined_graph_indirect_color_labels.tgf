@@ -1,86 +1,86 @@
-1 <a11.8>
-2 <resid_post>
-3 <a11.0>
-4 <m10>
-5 <m0>
-6 <a11.8_v>
-7 <a1.10_k>
-8 <a1.10>
-9 <a11.0_v>
-10 <a0.8>
-11 <a1.10_v>
-12 <a0.7>
-13 <a0.6>
-14 <a2.10>
-15 <a0.11>
-16 <a0.9>
-17 <a0.4>
-18 <a0.3>
-19 embed
-20 <a0.11_v>
-21 <a0.9_v>
-22 <a0.8_v>
-23 <a0.2>
-24 <a0.9_k>
-25 <a0.4_v>
-26 <m11>
-27 <a0.10>
-28 <a0.10_v>
-29 <m2>
-30 <m1>
-31 <a0.6_v>
-32 <a0.5>
+<a11.8> orange
+<resid_post> cyan
+<a11.0> orange
+<m10> cyan
+<m0> cyan
+<a11.8_v> orange
+<a11.0_v> orange
+<m2> red
+<m1> red
+<a1.10> orange
+<a0.8> orange
+<a1.10_v> orange
+<a0.6> cyan
+<a0.11> orange
+<a0.4> orange
+embed cyan
+<a0.11_v> orange
+<a0.10_v> purple
+<a0.9_v> orange
+<a0.8_v> orange
+<a0.6_v> red
+<a0.10> purple
+<a0.9> orange
+<a2.10> orange
+<a1.10_k> orange
+<a0.5> red
+<a0.2> orange
+<a0.7> orange
+<a0.3> yellow
+<a0.9_k> yellow
+<a0.4_v> yellow
+<m11> blue
 #
-1 2 purple
-1 6 purple
-2 3 purple
-2 4 black
-2 5 purple
-2 26 yellow
-3 9 purple
-4 5 black
-4 14 red
-4 15 purple
-4 16 red
-4 17 purple
-4 18 red
-4 19 purple
-4 29 blue
-5 6 purple
-5 7 red
-5 12 purple
-5 13 black
-5 15 purple
-5 19 black
-5 26 yellow
-5 27 green
-5 9 blue
-5 29 blue
-5 30 blue
-5 10 blue
-6 8 purple
-7 8 purple
-7 16 blue
-7 32 blue
-8 11 purple
-9 10 purple
-9 12 red
-9 13 purple
-10 11 purple
-10 22 purple
-11 16 purple
-11 19 purple
-11 23 purple
-13 31 blue
-14 29 blue
-15 20 purple
-16 21 purple
-16 24 red
-17 25 red
-19 20 purple
-19 21 purple
-19 22 purple
-19 28 green
-19 31 blue
-27 28 green
-29 30 blue
+<a11.8> <resid_post> orange
+<a11.0> <resid_post> orange
+<m10> <resid_post> cyan
+<m0> <resid_post> orange
+<m0> <m10> cyan
+<m0> <a11.8_v> orange
+<m0> <a11.0_v> red
+<m0> <m2> red
+<m0> <m1> red
+<m0> <a1.10_k> yellow
+<m0> <m11> blue
+<a11.8_v> <a11.8> orange
+<a11.0_v> <a11.0> orange
+<m2> <m10> red
+<m1> <m2> red
+<a1.10> <a11.8_v> orange
+<a0.8> <m0> red
+<a0.8> <a11.0_v> orange
+<a0.8> <a1.10_v> orange
+<a1.10_v> <a1.10> orange
+<a0.6> <m0> cyan
+<a0.6> <a11.0_v> orange
+<a0.11> <m10> orange
+<a0.11> <m0> orange
+<a0.4> <m10> orange
+embed <m10> orange
+embed <m0> cyan
+embed <a1.10_v> orange
+embed <a0.11_v> orange
+embed <a0.10_v> purple
+embed <a0.9_v> orange
+embed <a0.8_v> orange
+embed <a0.6_v> red
+<a0.11_v> <a0.11> orange
+<a0.10_v> <a0.10> purple
+<a0.9_v> <a0.9> orange
+<a0.8_v> <a0.8> orange
+<a0.6_v> <a0.6> red
+<a0.10> <m0> purple
+<a0.9> <a1.10_v> orange
+<a0.9> <a1.10_k> red
+<a0.9> <m10> yellow
+<a2.10> <m2> red
+<a2.10> <m10> yellow
+<a1.10_k> <a1.10> orange
+<a0.5> <a1.10_k> red
+<a0.2> <a1.10_v> orange
+<a0.7> <m0> orange
+<a0.7> <a11.0_v> yellow
+<a0.3> <m10> yellow
+<a0.9_k> <a0.9> yellow
+<a0.4_v> <a0.4> yellow
+<m11> <resid_post> blue
