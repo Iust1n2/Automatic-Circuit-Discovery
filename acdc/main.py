@@ -388,7 +388,7 @@ exp_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 start_time = datetime.datetime.now()  # Record the start time
 
 # Define the save path
-save_path = "acdc/hybridretrieval/acdc_results/ims_hybridretrieval_indirect_0.15"
+save_path = "acdc/hybridretrieval/acdc_results/test/ims_knowledgeretrieval_indirect_0.15"
 
 for i in range(args.max_num_epochs):
     exp.step(testing=False)

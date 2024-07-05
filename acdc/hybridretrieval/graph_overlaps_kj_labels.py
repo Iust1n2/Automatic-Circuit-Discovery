@@ -72,17 +72,17 @@ def write_tgf(graph, tgf_file):
             f.write(f"{source} {target} {edge_color}\n")
 
 # Read graphs from files
-edges1 = read_adjacency_list('hybridretrieval/acdc_results/ims_hybridretrieval_indirect_0.15/ims_hybridretrieval_indirect.tgf')
-edges2 = read_adjacency_list('hybridretrieval/acdc_results/ims_join_indirect_0.15/ims_join_indirect_0.15.tgf')
-edges3 = read_adjacency_list('hybridretrieval/acdc_results/ims_knowledgeretrieval_indirect_0.15/ims_knowledgeretrieval_indirect_0.15.tgf')
+edges1 = read_adjacency_list('hybridretrieval/acdc_results/test/ims_hybridretrieval_indirect_0.15/ims_hybridretrieval_indirect.tgf')
+edges2 = read_adjacency_list('hybridretrieval/acdc_results/test/ims_join_indirect_0.15/ims_join_indirect.tgf')
+edges3 = read_adjacency_list('hybridretrieval/acdc_results/test/ims_knowledgeretrieval_indirect_0.15/ims_knowledgeretrieval_indirect.tgf')
 
 # Create a unified graph
 G = nx.DiGraph()
 
 # Add edges from each graph to the unified graph
-add_edges_to_graph(G, edges1, 'J')
-add_edges_to_graph(G, edges2, 'K')
-add_edges_to_graph(G, edges3, 'M')
+add_edges_to_graph(G, edges1, 'M')
+add_edges_to_graph(G, edges2, 'J')
+add_edges_to_graph(G, edges3, 'K')
 
 # Write the unified graph to a TGF file
-write_tgf(G, 'hybridretrieval/combined_tgf/combined_graph_indirect_kj_labels.tgf')
+write_tgf(G, 'hybridretrieval/combined_tgf/combined_graph_indirect_kj_labels_new.tgf')

@@ -24,7 +24,7 @@ import IPython
 from acdc.acdc_utils import MatchNLLMetric, frac_correct_metric, logit_diff_metric, kl_divergence, negative_log_probs
 import torch
 from acdc.docstring.utils import AllDataThings
-from acdc.hybridretrieval.datasets.kbicr_indirect import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
+from acdc.hybridretrieval.datasets.knowledge_retrieval_indirect import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
 from tqdm import tqdm
 import wandb
 from transformer_lens.HookedTransformer import HookedTransformer

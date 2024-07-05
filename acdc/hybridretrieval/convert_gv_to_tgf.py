@@ -2,7 +2,7 @@ import networkx as nx
 from networkx.drawing.nx_agraph import read_dot
 import os 
 
-os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery/acdc/')
+os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery/acdc/hybridretrieval/acdc_results/test/')
 
 def convert_gv_to_tgf(gv_file, tgf_file):
     # Read the DOT file using NetworkX
@@ -21,7 +21,7 @@ def convert_gv_to_tgf(gv_file, tgf_file):
         for edge in graph.edges():
             f.write(f"{edge[0]} {edge[1]}\n")
 
-convert_gv_to_tgf('ims_hybridretrieval_direct_0.15/img_new_56.gv', 'ims_hybridretrieval_direct_0.15/ims_hybridretrieval_direct.tgf')
-convert_gv_to_tgf('ims_knowledgeretrieval_direct_0.15/img_new_68.gv', 'ims_knowledgeretrieval_direct_0.15/ims_knowledgeretrieval_direct.tgf')
-convert_gv_to_tgf('ims_join_direct_0.15/img_new_74.gv', 'ims_join_direct_0.15/ims_join_direct.tgf')
+convert_gv_to_tgf('ims_hybridretrieval_indirect_0.15/img_new_68.gv', 'ims_hybridretrieval_indirect_0.15/ims_hybridretrieval_indirect.tgf')
+convert_gv_to_tgf('ims_knowledgeretrieval_indirect_0.15/img_new_21.gv', 'ims_knowledgeretrieval_indirect_0.15/ims_knowledgeretrieval_indirect.tgf')
+convert_gv_to_tgf('ims_join_indirect_0.15/img_new_40.gv', 'ims_join_indirect_0.15/ims_join_indirect.tgf')
 
