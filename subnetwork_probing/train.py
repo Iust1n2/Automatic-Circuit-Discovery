@@ -1,3 +1,10 @@
+import sys
+import os
+os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery') # change to the root dir of the project
+
+# # # Add the project root directory to the Python path
+sys.path.insert(0, os.getcwd())
+
 import argparse
 from typing import List, Optional
 import random
@@ -6,6 +13,10 @@ from functools import partial
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import collections
+from acdc.hybridretrieval.utils import (
+    get_all_hybrid_retrieval_things,
+    get_gpt2_small
+)
 from acdc.greaterthan.utils import get_all_greaterthan_things
 from acdc.ioi.utils import get_all_ioi_things
 import huggingface_hub
@@ -13,7 +24,7 @@ import gc
 
 import networkx as nx
 import numpy as np
-from acdc.docstring.utils import AllDataThings, get_all_docstring_things
+from acdc.docstring.utils import get_all_docstring_things
 from acdc.logic_gates.utils import get_all_logic_gate_things
 import pandas as pd
 import torch
@@ -140,11 +151,21 @@ def correspondence_from_mask(model: HookedTransformer, nodes_to_mask: list[TLACD
     return corr
 
 
-def log_plotly_bar_chart(x: List[str], y: List[float]) -> None:
+def log_plotly_bar_chart(x: List[str], y: List[float], save_dir: str, file_name: str) -> None:
     import plotly.graph_objects as go
-
+    # Ensure the save directory exists
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # Create the Plotly bar chart
     fig = go.Figure(data=[go.Bar(x=x, y=y)])
-    wandb.log({"mask_scores": fig})
+    
+    # Define the full path for the output file
+    file_path = os.path.join(save_dir, file_name)
+    
+    # Save the plot as an image
+    fig.write_image(file_path)
+    # wandb.log({"mask_scores": fig})
+
 
 
 def visualize_mask(model: HookedTransformer) -> tuple[int, list[TLACDCInterpNode]]:
@@ -196,10 +217,9 @@ def visualize_mask(model: HookedTransformer) -> tuple[int, list[TLACDCInterpNode
             nodes_to_mask.append(node)
 
     # assert len(mask_scores_for_names) == 3 * number_of_heads * number_of_layers
-    log_plotly_bar_chart(x=node_name_list, y=mask_scores_for_names)
+    log_plotly_bar_chart(x=node_name_list, y=mask_scores_for_names, save_dir="subnetwork_probing/mask_scores", file_name="mask_scores.png")
     node_count = total_nodes - len(nodes_to_mask)
     return node_count, nodes_to_mask
-
 
 def regularizer(
     model: HookedTransformer,
@@ -244,10 +264,10 @@ def do_zero_caching(model: HookedTransformer) -> None:
         layer.hook_mlp_out.cache = None
 
 
-def train_induction(
+def train_kbicr(
     args,
-    induction_model: HookedTransformer,
-    all_task_things: AllDataThings,
+    kbicr_model: HookedTransformer,
+    all_task_things
 ):
     epochs = args.epochs
     lambda_reg = args.lambda_reg
@@ -257,59 +277,59 @@ def train_induction(
 
     torch.manual_seed(args.seed)
 
-    wandb.init(
-        name=args.wandb_name,
-        project=args.wandb_project,
-        entity=args.wandb_entity,
-        group=args.wandb_group,
-        config=args,
-        dir=args.wandb_dir,
-        mode=args.wandb_mode,
-    )
+    # wandb.init(
+    #     name=args.wandb_name,
+    #     project=args.wandb_project,
+    #     entity=args.wandb_entity,
+    #     group=args.wandb_group,
+    #     config=args,
+    #     dir=args.wandb_dir,
+    #     mode=args.wandb_mode,
+    # )
     test_metric_fns = all_task_things.test_metrics
 
     print("Reset subject:", args.reset_subject)
     if args.reset_subject:
-        reset_network(args.task, args.device, induction_model)
+        reset_network(args.task, args.device, kbicr_model)
         gc.collect()
         torch.cuda.empty_cache()
-        induction_model.freeze_weights()
+        kbicr_model.freeze_weights()
 
-        reset_logits = do_random_resample_caching(induction_model, all_task_things.validation_data)
+        reset_logits = do_random_resample_caching(kbicr_model, all_task_things.validation_data)
         print("Reset validation metric: ", all_task_things.validation_metric(reset_logits))
-        reset_logits = do_random_resample_caching(induction_model, all_task_things.test_data)
+        reset_logits = do_random_resample_caching(kbicr_model, all_task_things.test_data)
         print("Reset test metric: ", {k: v(reset_logits).item() for k, v in all_task_things.test_metrics.items()})
 
     # one parameter per thing that is masked
-    mask_params = [p for n, p in induction_model.named_parameters() if "mask_scores" in n and p.requires_grad]
+    mask_params = [p for n, p in kbicr_model.named_parameters() if "mask_scores" in n and p.requires_grad]
     # parameters for the probe (we don't use a probe)
-    model_params = [p for n, p in induction_model.named_parameters() if "mask_scores" not in n and p.requires_grad]
+    model_params = [p for n, p in kbicr_model.named_parameters() if "mask_scores" not in n and p.requires_grad]
     assert len(model_params) == 0, ("MODEL should be empty", model_params)
     trainer = torch.optim.Adam(mask_params, lr=args.lr)
 
     if args.zero_ablation:
-        do_zero_caching(induction_model)
+        do_zero_caching(kbicr_model)
     for epoch in tqdm(range(epochs)):  # tqdm.notebook.tqdm(range(epochs)):
         if not args.zero_ablation:
-            do_random_resample_caching(induction_model, all_task_things.validation_patch_data)
-        induction_model.train()
+            do_random_resample_caching(kbicr_model, all_task_things.validation_patch_data)
+        kbicr_model.train()
         trainer.zero_grad()
 
-        specific_metric_term = all_task_things.validation_metric(induction_model(all_task_things.validation_data))
-        regularizer_term = regularizer(induction_model)
+        specific_metric_term = all_task_things.validation_metric(kbicr_model(all_task_things.validation_data))
+        regularizer_term = regularizer(kbicr_model)
         loss = specific_metric_term + regularizer_term * lambda_reg
         loss.backward()
 
         trainer.step()
 
-    number_of_nodes, nodes_to_mask = visualize_mask(induction_model)
-    wandb.log(
-        {
-            "regularisation_loss": regularizer_term.item(),
-            "specific_metric_loss": specific_metric_term.item(),
-            "total_loss": loss.item(),
-        }
-    )
+    number_of_nodes, nodes_to_mask = visualize_mask(kbicr_model)
+    # wandb.log(
+    #     {
+    #         "regularisation_loss": regularizer_term.item(),
+    #         "specific_metric_loss": specific_metric_term.item(),
+    #         "total_loss": loss.item(),
+    #     }
+    # )
 
     with torch.no_grad():
         # The loss has a lot of variance so let's just average over a few runs with the same seed
@@ -319,11 +339,11 @@ def train_induction(
         specific_metric_term = 0.0
         for _ in range(args.n_loss_average_runs):
             if args.zero_ablation:
-                do_zero_caching(induction_model)
+                do_zero_caching(kbicr_model)
             else:
-                do_random_resample_caching(induction_model, all_task_things.validation_patch_data)
+                do_random_resample_caching(kbicr_model, all_task_things.validation_patch_data)
             specific_metric_term += all_task_things.validation_metric(
-                induction_model(all_task_things.validation_data)
+                kbicr_model(all_task_things.validation_data)
             ).item()
         print(f"Final train/validation metric: {specific_metric_term:.4f}")
 
@@ -334,13 +354,12 @@ def train_induction(
             # Test loss
             for _ in range(args.n_loss_average_runs):
                 if args.zero_ablation:
-                    do_zero_caching(induction_model)
+                    do_zero_caching(kbicr_model)
                 else:
-                    do_random_resample_caching(induction_model, all_task_things.test_patch_data)
-                test_specific_metric_term += fn(induction_model(all_task_things.test_data)).item()
+                    do_random_resample_caching(kbicr_model, all_task_things.test_patch_data)
+                test_specific_metric_term += fn(kbicr_model(all_task_things.test_data)).item()
             test_specific_metrics[f"test_{k}"] = test_specific_metric_term
-
-        print(f"Final test metric: {test_specific_metrics}")
+            print(f"Final test metric: {test_specific_metric_term:.4f}")
 
         to_log_dict = dict(
             number_of_nodes=number_of_nodes,
@@ -349,7 +368,7 @@ def train_induction(
             **test_specific_metrics,
         )
 
-    return induction_model, to_log_dict
+    return kbicr_model, to_log_dict
 
 
 # check regularizer can set all the
@@ -423,24 +442,24 @@ def get_nodes_mask_dict(model: HookedTransformer):
     return mask_value_dict
 
 
-parser = argparse.ArgumentParser("train_induction")
+parser = argparse.ArgumentParser("hybrid-retrieval")
 parser.add_argument("--wandb-name", type=str, default="subnetwork-probing")
 parser.add_argument("--wandb-project", type=str, default="subnetwork-probing")
 parser.add_argument("--wandb-entity", type=str,  default="remix_school-of-rock")
 parser.add_argument("--wandb-group", type=str,  default="subnetwork-probing")
 parser.add_argument("--wandb-dir", type=str, default="/tmp/wandb")
 parser.add_argument("--wandb-mode", type=str, default="online")
-parser.add_argument("--device", type=str, default="cpu")
+parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--lr", type=float, default=0.001)
 parser.add_argument("--loss-type", type=str,  default='kl_div')
 parser.add_argument("--epochs", type=int, default=3000)
 parser.add_argument("--verbose", type=int, default=1)
-parser.add_argument("--lambda_reg", type=float, default=50)
-parser.add_argument("--zero-ablation", type=int, default=True)
+parser.add_argument("--lambda_reg", type=float, default=0.15)
+parser.add_argument("--zero-ablation", type=bool, default=True)
 parser.add_argument("--reset-subject", type=int, default=0)
 parser.add_argument("--seed", type=int, default=random.randint(0, 2**31 - 1), help="Random seed (default: random)")
-parser.add_argument("--num-examples", type=int, default=50)
-parser.add_argument("--seq-len", type=int, default=300)
+parser.add_argument("--num-examples", type=int, default=20)
+parser.add_argument("--seq-len", type=int, default=29)
 parser.add_argument("--n-loss-average-runs", type=int, default=20)
 parser.add_argument("--task", type=str, required=True)
 parser.add_argument("--torch-num-threads", type=int, default=0, help="How many threads to use for torch (0=all)")
@@ -544,6 +563,12 @@ if __name__ == "__main__":
             seq_len=seq_len,
             device=args.device,
         )
+    elif args.task == "hybrid-retrieval":
+        all_task_things = get_all_hybrid_retrieval_things(
+            num_examples=args.num_examples,
+            device=args.device,
+            metric_name=args.loss_type,
+        )
     else:
         raise ValueError(f"Unknown task {args.task}")
 
@@ -579,9 +604,9 @@ if __name__ == "__main__":
 
     model.freeze_weights()
     print("Finding subnetwork...")
-    model, to_log_dict = train_induction(
+    model, to_log_dict = train_kbicr(
         args=args,
-        induction_model=model,
+        kbicr_model=model,
         all_task_things=all_task_things,
     )
 
@@ -594,7 +619,7 @@ if __name__ == "__main__":
     to_log_dict["nodes_to_mask"] = list(map(str, to_log_dict["nodes_to_mask"]))
     to_log_dict["number_of_edges"] = corr.count_no_edges()
     to_log_dict["percentage_binary"] = percentage_binary
-
-    wandb.log(to_log_dict)
-    # sanity_check_with_transformer_lens(mask_val_dict)
-    wandb.finish()
+    print(to_log_dict)
+    # wandb.log(to_log_dict)
+    # # sanity_check_with_transformer_lens(mask_val_dict)
+    # wandb.finish()
