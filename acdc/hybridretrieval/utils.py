@@ -1,3 +1,10 @@
+import sys
+import os
+os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery') # change to the root dir of the project
+
+# # # Add the project root directory to the Python path
+sys.path.insert(0, os.getcwd())
+
 from collections import OrderedDict
 from dataclasses import dataclass
 from acdc.TLACDCEdge import (
@@ -17,7 +24,7 @@ import IPython
 from acdc.acdc_utils import MatchNLLMetric, frac_correct_metric, logit_diff_metric, kl_divergence, negative_log_probs
 import torch
 from acdc.docstring.utils import AllDataThings
-from acdc.hybridretrieval.datasets.join_direct import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
+from acdc.hybridretrieval.datasets.kbicr_indirect import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
 from tqdm import tqdm
 import wandb
 from transformer_lens.HookedTransformer import HookedTransformer
@@ -59,33 +66,34 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
 
     # Print the tensor for verification
     print("Clean Data Datasets:")
-    print(clean_data)
+    print(clean_data.shape)
 
     print("\nCorrupted Data Datasets:")
-    print(corrupted_data)
+    print(corrupted_data.shape)
+    
+    num_examples = clean_data.size(0)
 
-    validation_data = clean_data[:num_examples, :]
-    validation_patch_data = corrupted_data[:num_examples, :]
-    test_data = clean_data[:num_examples, :]
-    test_patch_data = corrupted_data[:num_examples, :]
+    # Define the split
+    validation_slice = num_examples // 2  # Half of the data for validation
 
-    # Print shapes for verification
+    # Split the data
+    validation_data = clean_data[:validation_slice, :]
+    validation_patch_data = corrupted_data[:validation_slice, :]
+    test_data = clean_data[validation_slice:, :]
+    test_patch_data = corrupted_data[validation_slice:, :]
+
+    # Checking the shapes of the resulting datasets
     print(f"Shape of validation_data: {validation_data.shape}")
     print(f"Shape of validation_patch_data: {validation_patch_data.shape}")
-    # print(f"Shape of validation_labels: {validation_labels.shape}")
-    # print(f"Shape of validation_wrong_labels: {validation_wrong_labels.shape}")
-
     print(f"Shape of test_data: {test_data.shape}")
     print(f"Shape of test_patch_data: {test_patch_data.shape}")
-    # print(f"Shape of test_labels: {test_labels.shape}")
-    # print(f"Shape of test_wrong_labels: {test_wrong_labels.shape}")
 
     with torch.no_grad():
         base_model_logits = tl_model(clean_data)[:, -1, :]
         base_model_logprobs = F.log_softmax(base_model_logits, dim=-1)
 
-    base_validation_logprobs = base_model_logprobs[:num_examples, :]
-    base_test_logprobs = base_model_logprobs[num_examples:, :]
+    base_validation_logprobs = base_model_logprobs[:validation_slice, :]
+    base_test_logprobs = base_model_logprobs[validation_slice:, :]
 
     if metric_name == "logit_diff":
         validation_metric = partial(
@@ -131,3 +139,21 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
         test_mask=None,
         test_patch_data=test_patch_data
     )
+
+def main():
+    num_examples = 20
+    device = "cuda"
+    metric_name = "kl_div"
+    kl_return_one_element = True
+    
+    # Call the function to get all hybrid retrieval things
+    all_data_things = get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return_one_element)
+    
+    # Print the returned data
+    print("All Data Things:")
+    print(all_data_things)
+    
+    # Perform further operations or tests using the returned data
+    
+if __name__ == "__main__":
+    main()

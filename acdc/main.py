@@ -388,7 +388,7 @@ exp_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 start_time = datetime.datetime.now()  # Record the start time
 
 # Define the save path
-save_path = "acdc/hybridretrieval/acdc_results/ims_join_direct_0.15"
+save_path = "acdc/hybridretrieval/acdc_results/ims_hybridretrieval_indirect_0.15"
 
 for i in range(args.max_num_epochs):
     exp.step(testing=False)
@@ -424,13 +424,17 @@ print(f"Elapsed time: {elapsed_time}")
 exp.save_edges(f"{save_path}/another_final_edges.pkl")
 
 if USING_WANDB:
-    edges_fname = f"{save_path}//edges.pth"
+    edges_fname = f"{save_path}/edges.pth"
     exp.save_edges(edges_fname)
     artifact = wandb.Artifact(edges_fname, type="dataset")
     artifact.add_file(edges_fname)
     wandb.log_artifact(artifact)
     os.remove(edges_fname)
     wandb.finish()
+else:   
+    edges_fname = f"{save_path}/edges.pth"
+    exp.save_edges(edges_fname)
+
 
 # %% [markdown]
 # <h2>Save the final subgraph of the model</h2>
@@ -440,6 +444,7 @@ if USING_WANDB:
 
 #%%
 exp.save_subgraph(
+    fpath=edges_fname,
     return_it=True,
 )
 # %%
