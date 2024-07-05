@@ -1,10 +1,10 @@
-Automatic-Circuit-Discovery/acdc/hybridretrieval/acdc_results
+Automatic-Circuit-Discovery/acdc/hybridretrieval/acdc_results/
 Automatic-Circuit-Discovery/acdc/hybridretrieval/acdc_results/test/
 Automatic-Circuit-Discovery/acdc/hybridretrieval/test_load_kl.ipynb
 Automatic-Circuit-Discovery/acdc/hybridretrieval/utils_old.py
-Automatic-Circuit-Discovery/subnetwork_probing/mask_scores
-Automatic-Circuit-Discovery/subnetwork_probing/logs
-Automatic-Circuit-Discovery/acdc/hybridretrieval/combined_tgf
+Automatic-Circuit-Discovery/subnetwork_probing/mask_scores/
+Automatic-Circuit-Discovery/subnetwork_probing/logs/
+Automatic-Circuit-Discovery/acdc/hybridretrieval/combined_tgf/
 out.txt
 out2.txt
 out1.txt
