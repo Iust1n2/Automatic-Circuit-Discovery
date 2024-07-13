@@ -60,14 +60,14 @@ class HybridRetrievalDataset:
             "Sara lives in USA, Washington - Sara, Lucy lives in Turkey, Ankara - Lucy, Tom lives in Italy, Rome - Tom",
             "John lives in Spain, Madrid - John, Michael lives in Canada, Toronto - Michael, Anna lives in Australia, Canberra - Anna",
             "David lives in Japan, Tokyo - David, Sara lives in Brazil, Rio de Janeiro - Sara, Alice lives in France, Paris - Alice",
-            "Bob lives in Germany, Berlin - Bob, Peter lives in USA, Washington - Peter, Lucy lives in Turkey, Ankara - Lucy",
+            "Bob lives in Germany, Berlin - Bob, Peter lives in USA, Washington - Peter, Tom lives in Turkey, Ankara - Tom",
             "Anna lives in Italy, Rome - Anna, Tom lives in Spain, Madrid - Tom, David lives in Canada, Toronto - David",
-            "Michael lives in Australia, Canberra - Michael, John lives in Japan, Tokyo - John, Sara lives in Brazil, Rio de Janeiro - Sara",
+            "Michael lives in Australia, Canberra - Michael, John lives in Japan, Tokyo - John, John lives in Brazil, Rio de Janeiro - John",
             "Alice lives in France, Paris - Alice, Bob lives in Germany, Berlin - Bob, John lives in USA, Washington - John",
             "Peter lives in Turkey, Ankara - Peter, Alice lives in Italy, Rome - Alice, Bob lives in France, Paris - Bob",
             "Lucy lives in Spain, Madrid - Lucy, Michael lives in Canada, Toronto - Michael, Tom lives in Australia, Canberra - Tom",
             "Anna lives in Japan, Tokyo - Anna, Sara lives in Brazil, Rio de Janeiro - Sara, David lives in France, Paris - David",
-            "John lives in Germany, Berlin - John, Peter lives in USA, Washington - Peter, Lucy lives in Turkey, Ankara - Lucy",
+            "John lives in Germany, Berlin - John, Peter lives in USA, Washington - Peter, Bob lives in Turkey, Ankara - Bob",
             "Tom lives in Italy, Rome - Tom, David lives in Spain, Madrid - David, Michael lives in Canada, Toronto - Michael",
             "Sara lives in Australia, Canberra - Sara, Alice lives in Japan, Tokyo - Alice, Bob lives in Brazil, Rio de Janeiro - Bob",
             "Peter lives in France, Paris - Peter, Lucy lives in Germany, Berlin - Lucy, Tom lives in USA, Washington - Tom",
@@ -83,19 +83,42 @@ class HybridRetrievalDataset:
             "Tom",
             "Anna",
             "Alice",
-            "Lucy",
+            "Tom",
             "David",
-            "Sara",
+            "John",
             "John",
             "Bob",
             "Tom",
             "David",
-            "Lucy",
+            "Bob",
             "Michael",
             "Bob",
             "Tom",
             "Anna",
             "Alice"
+        ]
+
+        clean_wrong_labels = [
+            "USA",
+            "Spain",
+            "Japan",
+            "Germany",
+            "Italy",
+            "Australia",
+            "France",
+            "Turkey",
+            "Canada",
+            "Brazil",
+            "USA",
+            "France",
+            "Australia",
+            "France",
+            "Turkey",
+            "Canada",
+            "Brazil",
+            "USA",
+            "Spain",
+            "Japan"
         ]
 
         corrupted_prompts = [
@@ -106,14 +129,14 @@ class HybridRetrievalDataset:
             "Sara lives in USA, Washington - Sara, Lucy lives in Turkey, Ankara - Lucy, Tom lives in Canada, Rome - Tom",
             "John lives in Spain, Madrid - John, Michael lives in Canada, Toronto - Michael, Anna lives in Australia, Toronto - Anna",
             "David lives in Japan, Tokyo - David, Sara lives in Brazil, Rio de Janeiro - Sara, Alice lives in Brazil, Paris - Alice",
-            "Bob lives in Germany, Berlin - Bob, Peter lives in USA, Washington - Peter, Lucy lives in Turkey, Sofia - Lucy",
+            "Bob lives in Germany, Berlin - Bob, Peter lives in USA, Washington - Peter, Tom lives in Turkey, Sofia - Tom",
             "Anna lives in Italy, Rome - Anna, Tom lives in Spain, Madrid - Tom, David lives in Spain, Toronto - David",
-            "Michael lives in Australia, Canberra - Michael, John lives in Japan, Tokyo - John, Sara lives in Brazil, Tirana - Sara",
+            "Michael lives in Australia, Canberra - Michael, John lives in Japan, Tokyo - John, John lives in Brazil, Tirana - John",
             "Alice lives in France, Paris - Alice, Bob lives in Germany, Berlin - Bob, John lives in Japan, Washington - John",
             "Peter lives in Turkey, Ankara - Peter, Alice lives in Italy, Rome - Alice, Bob lives in France, Milan - Bob",
             "Lucy lives in Spain, Madrid - Lucy, Michael lives in Canada, Toronto - Michael, Tom lives in Portugal, Canberra - Tom",
             "Anna lives in Japan, Tokyo - Anna, Sara lives in Brazil, Rio de Janeiro - Sara, David lives in France, Los Angeles - David",
-            "John lives in Germany, Berlin - John, Peter lives in USA, Washington - Peter, Lucy lives in Germany, Ankara - Lucy",
+            "John lives in Germany, Berlin - John, Peter lives in USA, Washington - Peter, Bob lives in Germany, Ankara - Bob",
             "Tom lives in Italy, Rome - Tom, David lives in Spain, Madrid - David, Michael lives in Canada, California - Michael",
             "Sara lives in Australia, Canberra - Sara, Alice lives in Japan, Tokyo - Alice, Bob lives in Venezuela, Rio de Janeiro - Bob",
             "Peter lives in France, Paris - Peter, Lucy lives in Germany, Berlin - Lucy, Tom lives in USA, Medellin - Tom",
@@ -129,14 +152,14 @@ class HybridRetrievalDataset:
             "Tom",
             "Anna",
             "Alice",
-            "Lucy",
+            "Tom",
             "David",
-            "Sara",
+            "John",
             "John",
             "Bob",
             "Tom",
             "David",
-            "Lucy",
+            "Bob",
             "Michael",
             "Bob",
             "Tom",
@@ -179,9 +202,10 @@ class HybridRetrievalDataset:
         clean_prompts = self.tokenize_prompts(clean_prompts)
         corrupted_prompts = self.tokenize_prompts(corrupted_prompts)
         clean_labels = self.tokenize_prompts(clean_labels)
-        corrupted_labels = self.tokenize_prompts(corrupted_labels)
-        
-        return clean_prompts, corrupted_prompts
+        # corrupted_labels = self.tokenize_prompts(corrupted_labels)
+        clean_wrong_labels = self.tokenize_prompts(clean_wrong_labels)
+
+        return clean_prompts, corrupted_prompts, clean_labels, clean_wrong_labels
     
    
 # Example Usage
@@ -190,7 +214,7 @@ if __name__ == "__main__":
     hybrid_retrieval_dataset = HybridRetrievalDataset()
     
     # Get datasets
-    clean_data, patch_data = hybrid_retrieval_dataset.get_dataset()
+    clean_data, patch_data, clean_labels, clean_wrong_labels = hybrid_retrieval_dataset.get_dataset()
     clean_data = clean_data.to(device)
     patch_data = patch_data.to(device)
 
@@ -200,3 +224,6 @@ if __name__ == "__main__":
 
     print("\nCorrupted Data Datasets:")
     print(patch_data)
+
+    print(clean_labels.shape)
+    print(clean_wrong_labels.shape)
