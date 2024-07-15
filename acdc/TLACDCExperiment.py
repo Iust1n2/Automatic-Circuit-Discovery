@@ -1,6 +1,7 @@
 from argparse import Namespace
 import os
 import pickle
+import json
 import gc
 import tempfile
 from typing import Callable, Optional, Literal, List, Dict, Any, Tuple, Union, Set, Iterable, TypeVar, Type
@@ -73,6 +74,7 @@ class TLACDCExperiment:
         wandb_group_name: str = "",
         wandb_notes: str = "",
         wandb_dir: Optional[str]=None,
+        local_dir: Optional[str]=None,
         wandb_mode: str="online",
         use_pos_embed: bool = False,
         skip_edges = "no",
@@ -174,20 +176,42 @@ class TLACDCExperiment:
         if self.parallel_hypotheses != 1:
             raise NotImplementedError("Parallel hypotheses not implemented yet")
 
-        if self.using_wandb:
-            # TODO?
-            self.metrics_to_plot = {}
-            self.metrics_to_plot["new_metrics"] = []
-            self.metrics_to_plot["list_of_parents_evaluated"] = []
-            self.metrics_to_plot["list_of_children_evaluated"] = []
-            self.metrics_to_plot["list_of_nodes_evaluated"] = []
-            self.metrics_to_plot["evaluated_metrics"] = []
-            self.metrics_to_plot["current_metrics"] = []
-            self.metrics_to_plot["results"] = []
-            self.metrics_to_plot["acdc_step"] = 0
-            self.metrics_to_plot["num_edges"] = []
-            self.metrics_to_plot["times"] = []
-            self.metrics_to_plot["times_diff"] = []
+        self.local_dir = local_dir
+
+        self.metrics_to_plot = {}
+        self.metrics_to_plot["new_metrics"] = []
+        self.metrics_to_plot["list_of_parents_evaluated"] = []
+        self.metrics_to_plot["list_of_children_evaluated"] = []
+        self.metrics_to_plot["list_of_nodes_evaluated"] = []
+        self.metrics_to_plot["evaluated_metrics"] = []
+        self.metrics_to_plot["current_metrics"] = []
+        self.metrics_to_plot["results"] = []
+        self.metrics_to_plot["acdc_step"] = 0
+        self.metrics_to_plot["num_edges"] = []
+        self.metrics_to_plot["times"] = []
+        self.metrics_to_plot["times_diff"] = []
+
+        if not self.using_wandb:
+            os.makedirs(self.local_dir, exist_ok=True)
+            self.metrics_file = os.path.join(self.local_dir, f"logs/metrics.json")
+
+    def save_metrics_locally(self):
+        with open(self.metrics_file, 'w') as f:
+            json.dump(self.metrics_to_plot, f, indent=4)
+
+    def update_metrics(self):
+        self.save_metrics_locally()
+
+    def log_metrics_locally(self, current_metric, parent_name, child_name, result, times):
+        # Log the provided metrics to self.metrics_to_plot
+        self.metrics_to_plot["current_metrics"].append(current_metric)
+        self.metrics_to_plot["list_of_parents_evaluated"].append(parent_name)
+        self.metrics_to_plot["list_of_children_evaluated"].append(child_name)
+        self.metrics_to_plot["results"].append(result)
+        self.metrics_to_plot["times"].append(times)
+
+        # Save the updated metrics locally
+        self.update_metrics()
 
     def verify_model_setup(self):
         if not self.model.cfg.attn_only and "use_hook_mlp_in" in self.model.cfg.to_dict():
@@ -640,6 +664,14 @@ class TLACDCExperiment:
                         child_name = str(self.current_node),
                         result = result,
                         times = time.time(),
+                    )
+                else:
+                    self.log_metrics_locally(
+                        current_metric=self.cur_metric,
+                        parent_name=str(self.corr.graph[sender_name][sender_index]),
+                        child_name=str(self.current_node),
+                        result=result,
+                        times=time.time(),
                     )
 
             self.update_cur_metric(recalc_metric=True, recalc_edges=True)

@@ -5,6 +5,8 @@ os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery') # change to the
 # # # Add the project root directory to the Python path
 sys.path.insert(0, os.getcwd())
 
+import dataclasses
+from typing import Optional, Callable, Any
 from collections import OrderedDict
 from dataclasses import dataclass
 from acdc.TLACDCEdge import (
@@ -24,10 +26,26 @@ import IPython
 from acdc.acdc_utils import MatchNLLMetric, frac_correct_metric, logit_diff_metric, kl_divergence, negative_log_probs
 import torch
 from acdc.docstring.utils import AllDataThings
-from acdc.hybridretrieval.datasets.knowledge_retrieval_indirect import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
+from acdc.hybridretrieval.datasets.kbicr_indirect import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
 from tqdm import tqdm
 import wandb
 from transformer_lens.HookedTransformer import HookedTransformer
+
+@dataclasses.dataclass(frozen=False)
+class AllDataThings:
+    tl_model: HookedTransformer
+    validation_metric: Callable[[torch.Tensor], torch.Tensor]
+    validation_data: torch.Tensor
+    validation_labels: Optional[torch.Tensor]
+    validation_wrong_labels: Optional[torch.Tensor]
+    validation_mask: Optional[torch.Tensor]
+    validation_patch_data: torch.Tensor
+    test_metrics: dict[str, Any]
+    test_data: torch.Tensor
+    test_labels: Optional[torch.Tensor]
+    test_wrong_labels: Optional[torch.Tensor]
+    test_mask: Optional[torch.Tensor]
+    test_patch_data: torch.Tensor
 
 def get_gpt2_small(device="cuda") -> HookedTransformer:
     tl_model = HookedTransformer.from_pretrained("gpt2")
@@ -60,7 +78,7 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
     hybrid_retrieval_dataset = HybridRetrievalDataset()
     
     # Get datasets
-    clean_data, corrupted_data = hybrid_retrieval_dataset.get_dataset()
+    clean_data, corrupted_data, clean_labels, clean_wrong_labels = hybrid_retrieval_dataset.get_dataset()
     clean_data = clean_data.to(device)
     corrupted_data = corrupted_data.to(device)
 
@@ -71,6 +89,12 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
     print("\nCorrupted Data Datasets:")
     print(corrupted_data.shape)
     
+    print("\nClean Labels shape:")
+    print(clean_labels.shape)
+
+    print("\nClean Wrong Labels shape:")
+    print(clean_wrong_labels.shape)
+
     num_examples = clean_data.size(0)
 
     # Define the split
@@ -78,9 +102,13 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
 
     # Split the data
     validation_data = clean_data[:validation_slice, :]
+    validation_labels = clean_labels[:validation_slice]
     validation_patch_data = corrupted_data[:validation_slice, :]
+    validation_wrong_labels = clean_wrong_labels[:validation_slice]
     test_data = clean_data[validation_slice:, :]
+    test_labels = clean_labels[validation_slice:]
     test_patch_data = corrupted_data[validation_slice:, :]
+    test_wrong_labels = clean_wrong_labels[validation_slice:]
 
     # Checking the shapes of the resulting datasets
     print(f"Shape of validation_data: {validation_data.shape}")
@@ -98,8 +126,8 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
     if metric_name == "logit_diff":
         validation_metric = partial(
                 logit_diff_metric,
-                correct_labels=None, # put none here instead of validation_labels
-                wrong_labels=None, # put none here instead of validation_wrong_labels
+                correct_labels=validation_labels, # put none here instead of validation_labels
+                wrong_labels=validation_wrong_labels, # put none here instead of validation_wrong_labels
             )
     elif metric_name == "kl_div":
         validation_metric = partial(
@@ -121,8 +149,8 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
         ),
         "logit_diff": partial(
             logit_diff_metric,
-            correct_labels=None, # put none here instead of test_labels,
-            wrong_labels=None, # put none here instead of test_wrong_labels,
+            correct_labels=test_labels, # put none here instead of test_labels,
+            wrong_labels=test_wrong_labels, # put none here instead of test_wrong_labels,
         )
     }
     
@@ -130,12 +158,14 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
         tl_model=tl_model,
         validation_data=validation_data,
         validation_metric=validation_metric,
-        validation_labels=None,  # put none here instead of validation_labels
+        validation_labels=validation_labels, 
+        validation_wrong_labels=validation_wrong_labels, # put none here instead of validation_labels
         validation_mask=None,
         validation_patch_data=validation_patch_data,
         test_metrics=test_metrics,
         test_data=test_data,
-        test_labels=None, # put none here instead of test)labels
+        test_labels=test_labels, # put none here instead of test)labels
+        test_wrong_labels=test_wrong_labels, 
         test_mask=None,
         test_patch_data=test_patch_data
     )
