@@ -201,11 +201,27 @@ def ct():
 # Random helpers for scraping
 # ----------------------------------
 
+import re
+import ast
+# modified to handle [:] symbol in log.txt correspondences
+def safe_literal_eval(item):
+    """Safely evaluates a string as a Python literal, returns None if evaluation fails."""
+    try:
+        return ast.literal_eval(item)
+    except (ValueError, SyntaxError):
+        return None
 
 def extract_info(string):
-    """Thanks GPT-4 for writing all this..."""
+    """Extracts parent and current node information from the provided string.
 
-    # Regex patterns
+    Args:
+        string (str): The input string containing node information.
+
+    Returns:
+        tuple: Contains parent_name, parent_list, current_name, current_list.
+    """
+
+    # Regex patterns to capture node information
     parent_pattern = r"cur_parent=TLACDCInterpNode\((.*?), \[(.*?)\]\)"
     current_pattern = r"self.current_node=TLACDCInterpNode\((.*?), \[(.*?)\]\)"
 
@@ -214,20 +230,30 @@ def extract_info(string):
     parent_name = parent_match.group(1) if parent_match else None
     parent_list_str = parent_match.group(2) if parent_match else None
     parent_list = None
-    if parent_list_str:
+    if parent_list_str == '':
+        parent_list = []
+    elif parent_list_str:
         parent_list_items = parent_list_str.split(", ")
-        parent_list = [ast.literal_eval(item if item != "COL" else "None") for item in parent_list_items]
+        parent_list = [safe_literal_eval(item if item != "COL" else "None") for item in parent_list_items]
 
     # Extract current node info
     current_match = re.search(current_pattern, string)
     current_name = current_match.group(1) if current_match else None
     current_list_str = current_match.group(2) if current_match else None
     current_list = None
-    if current_list_str:
+    if current_list_str == '':
+        current_list = []
+    elif current_list_str:
         current_list_items = current_list_str.split(", ")
-        current_list = [ast.literal_eval(item if item != "COL" else "None") for item in current_list_items]
+        current_list = [safe_literal_eval(item if item != "COL" else "None") for item in current_list_items]
 
-    return parent_name.replace("hook_resid_mid", "hook_mlp_in"), parent_list, current_name.replace("hook_resid_mid", "hook_mlp_in"), current_list
+    # Replace "hook_resid_mid" with "hook_mlp_in" in names
+    if parent_name:
+        parent_name = parent_name.replace("hook_resid_mid", "hook_mlp_in")
+    if current_name:
+        current_name = current_name.replace("hook_resid_mid", "hook_mlp_in")
+
+    return parent_name, parent_list, current_name, current_list
 
 # ----------------------------------
 # Precision and recall etc metrics
@@ -378,6 +404,7 @@ def reset_network(task: str, device, model: torch.nn.Module) -> None:
         "induction": "induction_reset_heads_neurons.pt",
         "docstring": "docstring_reset_heads_neurons.pt",
         "greaterthan": "greaterthan_reset_heads_neurons.pt",
+        "hybrid-retrieval": "hybrid_reset_heads_neurons.pt",
     }[task]
     random_model_file = hf_hub_download(repo_id="agaralon/acdc_reset_models", filename=filename)
     reset_state_dict = torch.load(random_model_file, map_location=device)

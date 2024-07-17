@@ -190,14 +190,14 @@ class TLACDCExperiment:
         self.metrics_to_plot["num_edges"] = []
         self.metrics_to_plot["times"] = []
         self.metrics_to_plot["times_diff"] = []
+    # comm for now as we're not running and it errors in roc.ipynb
+    #     if not self.using_wandb:
+    #         os.makedirs(self.local_dir, exist_ok=True)
+    #         self.metrics_file = os.path.join(self.local_dir, f"logs/metrics.json")
 
-        if not self.using_wandb:
-            os.makedirs(self.local_dir, exist_ok=True)
-            self.metrics_file = os.path.join(self.local_dir, f"logs/metrics.json")
-
-    def save_metrics_locally(self):
-        with open(self.metrics_file, 'w') as f:
-            json.dump(self.metrics_to_plot, f, indent=4)
+    # def save_metrics_locally(self):
+    #     with open(self.metrics_file, 'w') as f:
+    #         json.dump(self.metrics_to_plot, f, indent=4)
 
     def update_metrics(self):
         self.save_metrics_locally()
@@ -859,7 +859,7 @@ class TLACDCExperiment:
             edge.present = is_present
         print("Done!")
 
-    def load_from_wandb_run(
+    def load_from_local_run(
         self,
         log_text: str,
     ) -> None:
