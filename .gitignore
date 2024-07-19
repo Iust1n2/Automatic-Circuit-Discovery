@@ -2,10 +2,12 @@ acdc/hybridretrieval/acdc_results/
 acdc/hybridretrieval/acdc_results/test/
 acdc/hybridretrieval/test_load_kl.ipynb
 acdc/hybridretrieval/garbage/
-acdc/hybridretrieval/roc.ipynb
+acdc/hybridretrieval/roc/roc_plot_generator.py
+acdc/hybridretrieval/roc/roc_plots/
 acdc/hybridretrieval/combined_tgf/
 subnetwork_probing/mask_scores/
 subnetwork_probing/logs/
+requirements.txt
 
 out.txt
 out2.txt
