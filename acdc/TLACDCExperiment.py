@@ -15,7 +15,7 @@ from acdc.TLACDCInterpNode import TLACDCInterpNode
 from acdc.TLACDCCorrespondence import TLACDCCorrespondence
 from transformer_lens.HookedTransformer import HookedTransformer
 from acdc.global_cache import GlobalCache
-from acdc.acdc_graphics import log_metrics_to_wandb
+from acdc.acdc_graphics import log_metrics_locally
 import warnings
 import wandb
 from acdc.acdc_utils import extract_info, shuffle_tensor
@@ -202,18 +202,6 @@ class TLACDCExperiment:
 
     def update_metrics(self):
         self.save_metrics_locally()
-
-    def log_metrics_locally(self, current_metric, parent_name, child_name, result, times, num_edges):
-        # Log the provided metrics to self.metrics_to_plot
-        self.metrics_to_plot["current_metrics"].append(current_metric)
-        self.metrics_to_plot["list_of_parents_evaluated"].append(parent_name)
-        self.metrics_to_plot["list_of_children_evaluated"].append(child_name)
-        self.metrics_to_plot["results"].append(result)
-        self.metrics_to_plot["num_edges"].append(num_edges)
-        self.metrics_to_plot["times"].append(times)
-
-        # Save the updated metrics locally
-        self.update_metrics()
 
     def verify_model_setup(self):
         if not self.model.cfg.attn_only and "use_hook_mlp_in" in self.model.cfg.to_dict():
@@ -679,12 +667,13 @@ class TLACDCExperiment:
                         times = time.time(),
                     )
                 else:
-                    self.log_metrics_locally(
+                   log_metrics_locally(
+                        self,
                         current_metric=self.cur_metric,
                         parent_name=str(self.corr.graph[sender_name][sender_index]),
                         child_name=str(self.current_node),
+                        evaluated_metric=evaluated_metric,
                         result=result,
-                        num_edges=self.cur_edges,
                         times=time.time(),
                     )
 
