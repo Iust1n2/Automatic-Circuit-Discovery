@@ -45,6 +45,7 @@ from subnetwork_probing.transformer_lens.transformer_lens.HookedTransformer impo
 from subnetwork_probing.transformer_lens.transformer_lens.HookedTransformerConfig import HookedTransformerConfig
 from subnetwork_probing.transformer_lens.transformer_lens.ioi_dataset import IOIDataset
 import wandb
+import json
 
 
 def iterative_correspondence_from_mask(
@@ -457,13 +458,13 @@ parser.add_argument("--verbose", type=int, default=1)
 parser.add_argument("--lambda_reg", type=float, default=0.15)
 parser.add_argument("--zero-ablation", type=bool, default=True)
 parser.add_argument("--reset-subject", type=int, default=0)
+parser.add_argument("--save_dir", type=str, help="Directory to save results")
 parser.add_argument("--seed", type=int, default=random.randint(0, 2**31 - 1), help="Random seed (default: random)")
 parser.add_argument("--num-examples", type=int, default=20)
 parser.add_argument("--seq-len", type=int, default=29)
 parser.add_argument("--n-loss-average-runs", type=int, default=20)
 parser.add_argument("--task", type=str, required=True)
 parser.add_argument("--torch-num-threads", type=int, default=0, help="How many threads to use for torch (0=all)")
-
 
 def get_transformer_config():
     cfg = HookedTransformerConfig(
@@ -620,6 +621,16 @@ if __name__ == "__main__":
     to_log_dict["number_of_edges"] = corr.count_no_edges()
     to_log_dict["percentage_binary"] = percentage_binary
     print(to_log_dict)
+
+    save_dir = Path(args.save_dir)
+    lr = args.lr
+    lambda_reg = args.lambda_reg
+    os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery/subnetwork_probing') 
+    save_path = f"{save_dir}/{args.task}_lr_{lr}_lambda_reg_{lambda_reg}" 
+    os.makedirs(save_path, exist_ok=True)
+    # Save to JSON
+    with open(f'{save_path}/results.json', 'w') as f:
+        json.dump(to_log_dict, f)
     # wandb.log(to_log_dict)
     # # sanity_check_with_transformer_lens(mask_val_dict)
     # wandb.finish()
