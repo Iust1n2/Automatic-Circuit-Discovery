@@ -26,7 +26,7 @@ import IPython
 from acdc.acdc_utils import MatchNLLMetric, frac_correct_metric, logit_diff_metric, kl_divergence, negative_log_probs
 import torch
 from acdc.docstring.utils import AllDataThings
-from acdc.hybridretrieval.datasets.kbicr_indirect import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
+from acdc.hybridretrieval.datasets.kbicr_template_indirect import HybridRetrievalDataset  # NOTE: the only import that is different from the original code is for the task
 from tqdm import tqdm
 import wandb
 from transformer_lens.HookedTransformer import HookedTransformer
@@ -95,6 +95,12 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
     print("\nClean Wrong Labels shape:")
     print(clean_wrong_labels.shape)
     
+    print("\nClean Labels shape:")
+    print(clean_labels.shape)
+
+    print("\nClean Wrong Labels shape:")
+    print(clean_wrong_labels.shape)
+
     num_examples = clean_data.size(0)
 
     # Define the split

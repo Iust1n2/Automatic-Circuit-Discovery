@@ -219,14 +219,16 @@ def show(
 def do_plotly_plot_and_log(
     experiment, x: List[int], y: List[float], plot_name: str, metadata: Optional[List[str]] = None,
 ) -> None:
-
+    
+    save_dir = experiment.local_dir
     # Create a plotly plot with metadata
     fig = go.Figure(
         data=[go.Scatter(x=x, y=y, mode="lines+markers", text=metadata)]
     )
-    wandb.log({plot_name: fig})
+    fig.write_image(f"{save_dir}/logs/{plot_name}.png")
+    # wandb.log({plot_name: fig})
 
-def log_metrics_to_wandb(
+def log_metrics_locally(
     experiment,
     current_metric: Optional[float] = None,
     parent_name = None,
@@ -294,17 +296,17 @@ def log_metrics_to_wandb(
                 plot_name="current_metrics",
             )
 
-        # Arthur added... I think wandb graphs have a lot of desirable properties
-        if experiment.skip_edges != "yes":
-            wandb.log({"num_edges_total": experiment.metrics_to_plot["num_edges"][-1]})
-        wandb.log({"experiment.cur_metric": experiment.metrics_to_plot["current_metrics"][-1]})
-        if experiment.second_metric is not None:
-            wandb.log({"experiment.second_metric": experiment.cur_second_metric})
+        # # Arthur added... I think wandb graphs have a lot of desirable properties
+        # if experiment.skip_edges != "yes":
+        #     wandb.log({"num_edges_total": experiment.metrics_to_plot["num_edges"][-1]})
+        # wandb.log({"experiment.cur_metric": experiment.metrics_to_plot["current_metrics"][-1]})
+        # if experiment.second_metric is not None:
+        #     wandb.log({"experiment.second_metric": experiment.cur_second_metric})
 
-        if picture_fname is not None:  # presumably this is more expensive_update_cur
-            wandb.log(
-                {"acdc_graph": wandb.Image(picture_fname),}
-            )
+        # if picture_fname is not None:  # presumably this is more expensive_update_cur
+        #     wandb.log(
+        #         {"acdc_graph": wandb.Image(picture_fname),}
+        #     )
 
 # -------------------------------------------
 # utilities for ROC and AUC

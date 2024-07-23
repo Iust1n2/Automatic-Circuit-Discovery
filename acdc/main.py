@@ -170,6 +170,8 @@ parser.add_argument('--wandb-group-name', type=str, required=False, default="def
 parser.add_argument('--wandb-project-name', type=str, required=False, default="acdc", help='Value for WANDB_PROJECT_NAME')
 parser.add_argument('--wandb-run-name', type=str, required=False, default=None, help='Value for WANDB_RUN_NAME')
 parser.add_argument("--wandb-dir", type=str, default="/tmp/wandb")
+parser.add_argument("--local-dir", type=str, default="/acdc_results", help="Local directory to save acdc run logs")
+parser.add_argument("--dataset", type=str, default="kbicr-indirect", help="Prompt dataset to use")
 parser.add_argument("--wandb-mode", type=str, default="online")
 parser.add_argument('--indices-mode', type=str, default="normal")
 parser.add_argument('--names-mode', type=str, default="normal")
@@ -233,6 +235,15 @@ NAMES_MODE = args.names_mode
 DEVICE = args.device
 RESET_NETWORK = args.reset_network
 SINGLE_STEP = True if args.single_step else False
+LOCAL_DIR = args.local_dir
+DATASET = args.dataset
+METRIC = args.metric
+
+# Setup the save path for the run as well as the log path for metrics
+save_path = f"acdc/{LOCAL_DIR}/{DATASET}_{METRIC}_{THRESHOLD}"
+log_path = f"{save_path}/logs"
+os.makedirs(save_path, exist_ok=True)
+os.makedirs(log_path, exist_ok=True)
 
 #%% [markdown] 
 # <h2>Setup Task</h2>
@@ -241,73 +252,11 @@ SINGLE_STEP = True if args.single_step else False
 
 num_examples = 20
 things = get_all_hybrid_retrieval_things(
-    num_examples=num_examples, device=DEVICE, metric_name="kl_div"
+    num_examples=num_examples, device=DEVICE, metric_name=METRIC
 )
 
 second_metric = None  # some tasks only have one metric
 use_pos_embed = TASK.startswith("tracr")
-
-# commented code for other tasks
-# if TASK == "ioi":
-#     num_examples = 100
-#     things = get_all_ioi_things(
-#         num_examples=num_examples, device=DEVICE, metric_name=args.metric
-#     )
-# elif TASK == "or_gate":
-#     num_examples = 1
-#     seq_len = 1
-
-#     things = get_all_logic_gate_things(
-#         mode="OR",
-#         num_examples=num_examples,
-#         seq_len=seq_len,
-#         device=DEVICE,
-#     )
-# elif TASK == "tracr-reverse":
-#     num_examples = 6
-#     things = get_all_tracr_things(
-#         task="reverse",
-#         metric_name=args.metric,
-#         num_examples=num_examples,
-#         device=DEVICE,
-#     )
-# elif TASK == "tracr-proportion":
-#     num_examples = 50
-#     things = get_all_tracr_things(
-#         task="proportion",
-#         metric_name=args.metric,
-#         num_examples=num_examples,
-#         device=DEVICE,
-#     )
-# elif TASK == "induction":
-#     num_examples = 10 if IN_COLAB else 50
-#     seq_len = 300
-#     things = get_all_induction_things(
-#         num_examples=num_examples, seq_len=seq_len, device=DEVICE, metric=args.metric
-#     )
-# elif TASK == "docstring":
-#     num_examples = 50
-#     seq_len = 41
-#     things = get_all_docstring_things(
-#         num_examples=num_examples,
-#         seq_len=seq_len,
-#         device=DEVICE,
-#         metric_name=args.metric,
-#         correct_incorrect_wandb=True,
-#     )
-# elif TASK == "greaterthan":
-#     num_examples = 100
-#     things = get_all_greaterthan_things(
-#         num_examples=num_examples, metric_name=args.metric, device=DEVICE
-#     )
-# elif TASK == "hybrid-retrieval":
-#     num_examples = 20
-#     things = get_all_hybrid_retrieval_things(
-#     num_examples=num_examples, device=DEVICE, metric_name="kl_div"
-# )
-# else:
-#     raise ValueError(f"Unknown task {TASK}")
-
 
 #%% [markdown]
 # <p> Let's define the four most important objects for ACDC experiments:
@@ -345,6 +294,8 @@ if WANDB_RUN_NAME is None or IPython.get_ipython() is not None:
 else:
     assert WANDB_RUN_NAME is not None, "I want named runs, always"
 
+USING_WANDB = False
+
 tl_model.reset_hooks()
 exp = TLACDCExperiment(
     model=tl_model,
@@ -356,6 +307,7 @@ exp = TLACDCExperiment(
     wandb_group_name=WANDB_GROUP_NAME,
     wandb_notes=notes,
     wandb_dir=args.wandb_dir,
+    local_dir=save_path,
     wandb_mode=args.wandb_mode,
     wandb_config=args,
     zero_ablation=ZERO_ABLATION,
@@ -386,9 +338,6 @@ exp = TLACDCExperiment(
 import datetime
 exp_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 start_time = datetime.datetime.now()  # Record the start time
-
-# Define the save path
-save_path = "acdc/hybridretrieval/acdc_results/test/ims_knowledgeretrieval_indirect_0.15"
 
 for i in range(args.max_num_epochs):
     exp.step(testing=False)

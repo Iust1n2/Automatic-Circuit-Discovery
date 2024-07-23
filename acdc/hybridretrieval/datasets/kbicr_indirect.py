@@ -167,30 +167,6 @@ class HybridRetrievalDataset:
             "Alice"
         ]
 
-        ## old corrupted prompts
-        # corrupted_prompts = [
-        #     "Alice lives in France, Paris - Alice, John lives in Germany, Berlin - John, Peter lives in Italy, Canada - Peter",
-        #     "Lucy lives in Turkey, Ankara - Lucy, Sara lives in Italy, Rome - Sara, Bob lives in Canada, Berlin - Alice",
-        #     "Tom lives in Canada, Toronto - Tom, Anna lives in Australia, Canberra - Anna, Michael lives in Brazil, Washington - Bob",
-        #     "David lives in Brazil, Rio de Janeiro - David, Alice lives in France, Paris - Alice, Peter lives in Japan, Rome - Lucy",
-        #     "Sara lives in USA, Washington - Sara, Lucy lives in Turkey, Ankara - Lucy, Tom lives in Spain, Madrid - Alice",
-        #     "John lives in Spain, Madrid - John, Michael lives in Canada, Toronto - Michael, Anna lives in France, Berlin - Peter",
-        #     "David lives in Japan, Tokyo - David, Sara lives in Brazil, Rio de Janeiro - Sara, Alice lives in Turkey, Madrid - Tom",
-        #     "Bob lives in Germany, Berlin - Bob, Peter lives in USA, Washington - Peter, Lucy lives in Italy, Tokyo - Anna",
-        #     "Anna lives in Italy, Rome - Anna, Tom lives in Spain, Madrid - Tom, David lives in Germany, Canberra - Michael",
-        #     "Michael lives in Australia, Canberra - Michael, John lives in Japan, Tokyo - John, Sara lives in France, Berlin - David",
-        #     "Alice lives in France, Paris - Alice, Bob lives in Germany, Berlin - Bob, John lives in Spain, Madrid - Peter",
-        #     "Peter lives in Turkey, Ankara - Peter, Alice lives in Italy, Rome - Alice, Bob lives in Canada, Tokyo - Lucy",
-        #     "Lucy lives in Spain, Madrid - Lucy, Michael lives in Canada, Toronto - Michael, Tom lives in Japan, Washington - John",
-        #     "Anna lives in Japan, Tokyo - Anna, Sara lives in Brazil, Rio de Janeiro - Sara, David lives in Germany, Berlin - Bob",
-        #     "John lives in Germany, Berlin - John, Peter lives in USA, Washington - Peter, Lucy lives in Spain, Madrid - Michael",
-        #     "Tom lives in Italy, Rome - Tom, David lives in Spain, Madrid - David, Michael lives in Japan, Canberra - John",
-        #     "Sara lives in Australia, Canberra - Sara, Alice lives in Japan, Tokyo - Alice, Bob lives in Turkey, Paris - David",
-        #     "Peter lives in France, Paris - Peter, Lucy lives in Germany, Berlin - Lucy, Tom lives in Canada, Rome - Sara",
-        #     "David lives in Turkey, Ankara - David, Michael lives in Italy, Rome - Michael, Anna lives in Germany, Berlin - Bob",
-        #     "John lives in Canada, Toronto - John, Sara lives in Australia, Canberra - Sara, Alice lives in Turkey, Washington - Peter"
-        # ]   
-
         
         # Print clean and corrupted prompts
         self.print_prompts(clean_prompts, corrupted_prompts)
@@ -202,10 +178,9 @@ class HybridRetrievalDataset:
         clean_prompts = self.tokenize_prompts(clean_prompts)
         corrupted_prompts = self.tokenize_prompts(corrupted_prompts)
         clean_labels = self.tokenize_prompts(clean_labels)
-        # corrupted_labels = self.tokenize_prompts(corrupted_labels)
-        clean_wrong_labels = self.tokenize_prompts(clean_wrong_labels)
-
-        return clean_prompts, corrupted_prompts, clean_labels, clean_wrong_labels
+        corrupted_labels = self.tokenize_prompts(corrupted_labels)
+        
+        return clean_prompts, corrupted_prompts
     
    
 # Example Usage

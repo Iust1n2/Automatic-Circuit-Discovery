@@ -131,6 +131,8 @@ class HybridRetrievalDataset:
         clean_prompts, clean_labels, clean_wrong_labels = self.generate_prompts_and_labels(names, capitals, countries)
         corrupted_prompts, corrupted_labels = self.generate_corrupted_prompts_and_labels(names, capitals, countries)
         
+        self.print_prompts(clean_prompts, corrupted_prompts)
+
         # Tokenize the prompts
         clean_prompts = self.tokenize_prompts(clean_prompts)
         corrupted_prompts = self.tokenize_prompts(corrupted_prompts)
