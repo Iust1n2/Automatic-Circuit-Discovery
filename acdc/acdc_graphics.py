@@ -225,7 +225,15 @@ def do_plotly_plot_and_log(
     fig = go.Figure(
         data=[go.Scatter(x=x, y=y, mode="lines+markers", text=metadata)]
     )
+    # Save the plot as a PNG image
     fig.write_image(f"{save_dir}/logs/{plot_name}.png")
+    
+    # Serialize the plot to JSON
+    fig_json = fig.to_json()
+    
+    # Save the JSON to a file
+    with open(f"{save_dir}/logs/{plot_name}.json", 'w') as json_file:
+        json_file.write(fig_json)
     # wandb.log({plot_name: fig})
 
 def log_metrics_locally(
