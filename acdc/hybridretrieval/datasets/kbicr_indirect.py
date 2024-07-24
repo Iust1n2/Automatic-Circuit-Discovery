@@ -178,10 +178,9 @@ class HybridRetrievalDataset:
         clean_prompts = self.tokenize_prompts(clean_prompts)
         corrupted_prompts = self.tokenize_prompts(corrupted_prompts)
         clean_labels = self.tokenize_prompts(clean_labels)
-         # corrupted_labels = self.tokenize_prompts(corrupted_labels)
-        clean_wrong_labels = self.tokenize_prompts(clean_wrong_labels)
-
-        return clean_prompts, corrupted_prompts, clean_labels, clean_wrong_labels
+        corrupted_labels = self.tokenize_prompts(corrupted_labels)
+        
+        return clean_prompts, corrupted_prompts
     
    
 # Example Usage
@@ -190,7 +189,7 @@ if __name__ == "__main__":
     hybrid_retrieval_dataset = HybridRetrievalDataset()
     
     # Get datasets
-    clean_data, patch_data = hybrid_retrieval_dataset.get_dataset()
+    clean_data, patch_data, clean_labels, clean_wrong_labels = hybrid_retrieval_dataset.get_dataset()
     clean_data = clean_data.to(device)
     patch_data = patch_data.to(device)
 
@@ -200,3 +199,6 @@ if __name__ == "__main__":
 
     print("\nCorrupted Data Datasets:")
     print(patch_data)
+
+    print(clean_labels.shape)
+    print(clean_wrong_labels.shape)

@@ -15,7 +15,7 @@ from acdc.TLACDCInterpNode import TLACDCInterpNode
 from acdc.TLACDCCorrespondence import TLACDCCorrespondence
 from transformer_lens.HookedTransformer import HookedTransformer
 from acdc.global_cache import GlobalCache
-from acdc.acdc_graphics import log_metrics_to_wandb
+from acdc.acdc_graphics import log_metrics_locally
 import warnings
 import wandb
 from acdc.acdc_utils import extract_info, shuffle_tensor
@@ -165,17 +165,6 @@ class TLACDCExperiment:
                 config=wandb_config,
             )
 
-        self.metric = lambda x: metric(x).item()
-        self.second_metric = second_metric
-        self.update_cur_metric(recalc_metric=True, recalc_edges=True)
-
-        self.threshold = threshold
-        assert self.ref_ds is not None or self.zero_ablation, "If you're doing random ablation, you need a ref ds"
-
-        self.parallel_hypotheses = parallel_hypotheses
-        if self.parallel_hypotheses != 1:
-            raise NotImplementedError("Parallel hypotheses not implemented yet")
-
         self.local_dir = local_dir
 
         self.metrics_to_plot = {}
@@ -190,28 +179,17 @@ class TLACDCExperiment:
         self.metrics_to_plot["num_edges"] = []
         self.metrics_to_plot["times"] = []
         self.metrics_to_plot["times_diff"] = []
-    # comm for now as we're not running and it errors in roc.ipynb
-    #     if not self.using_wandb:
-    #         os.makedirs(self.local_dir, exist_ok=True)
-    #         self.metrics_file = os.path.join(self.local_dir, f"logs/metrics.json")
 
-    # def save_metrics_locally(self):
-    #     with open(self.metrics_file, 'w') as f:
-    #         json.dump(self.metrics_to_plot, f, indent=4)
+        if not self.using_wandb:
+            os.makedirs(self.local_dir, exist_ok=True)
+            self.metrics_file = os.path.join(self.local_dir, f"logs/metrics.json")
+
+    def save_metrics_locally(self):
+        with open(self.metrics_file, 'w') as f:
+            json.dump(self.metrics_to_plot, f, indent=4)
 
     def update_metrics(self):
         self.save_metrics_locally()
-
-    def log_metrics_locally(self, current_metric, parent_name, child_name, result, times):
-        # Log the provided metrics to self.metrics_to_plot
-        self.metrics_to_plot["current_metrics"].append(current_metric)
-        self.metrics_to_plot["list_of_parents_evaluated"].append(parent_name)
-        self.metrics_to_plot["list_of_children_evaluated"].append(child_name)
-        self.metrics_to_plot["results"].append(result)
-        self.metrics_to_plot["times"].append(times)
-
-        # Save the updated metrics locally
-        self.update_metrics()
 
     def verify_model_setup(self):
         if not self.model.cfg.attn_only and "use_hook_mlp_in" in self.model.cfg.to_dict():
@@ -232,14 +210,23 @@ class TLACDCExperiment:
         if initial:
             assert abs(self.cur_metric) < 1e-5, f"Metric {self.cur_metric=} is not zero"
 
-        if self.using_wandb:
-            wandb_return_dict = {
+        # Save the current metrics locally if not using wandb
+        if not self.using_wandb:
+            metrics_data = {
                 "cur_metric": self.cur_metric,
                 "num_edges": self.cur_edges,
             }
             if self.second_metric is not None:
-                wandb_return_dict["second_cur_metric"] = self.cur_second_metric
-            wandb.log(wandb_return_dict)
+                metrics_data["second_cur_metric"] = self.cur_second_metric
+
+            # Update metrics_to_plot dictionary
+            self.metrics_to_plot["current_metrics"].append(self.cur_metric)
+            self.metrics_to_plot["num_edges"].append(self.cur_edges)
+            if self.second_metric is not None:
+                self.metrics_to_plot["current_metrics"].append(self.cur_second_metric)
+
+            # Save metrics to the metrics.json file
+            self.update_metrics()
 
     def reverse_topologically_sort_corr(self):
         """Topologically sort the template corr"""
@@ -556,6 +543,8 @@ class TLACDCExperiment:
         start_step_time = time.time()
         self.step_idx += 1
 
+        self.metrics_to_plot["steps"].append(self.step_idx)
+
         self.update_cur_metric(recalc_metric=True, recalc_edges=True)
         initial_metric = self.cur_metric
 
@@ -666,10 +655,12 @@ class TLACDCExperiment:
                         times = time.time(),
                     )
                 else:
-                    self.log_metrics_locally(
+                   log_metrics_locally(
+                        self,
                         current_metric=self.cur_metric,
                         parent_name=str(self.corr.graph[sender_name][sender_index]),
                         child_name=str(self.current_node),
+                        evaluated_metric=evaluated_metric,
                         result=result,
                         times=time.time(),
                     )
@@ -863,7 +854,7 @@ class TLACDCExperiment:
         self,
         log_text: str,
     ) -> None:
-        """Set the current subgraph equal to one from a wandb run"""
+        """Set the current subgraph equal to one from a local run"""
 
         # initialize by marking no edges as present
         for _, edge in self.corr.all_edges().items():
