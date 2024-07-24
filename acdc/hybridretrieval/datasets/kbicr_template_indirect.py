@@ -13,7 +13,7 @@ import re
 import copy
 from itertools import cycle, islice
 
-names = ["Alice", "John", "Peter", "Bob", "Tom", "Anna", "Michael", "David"]
+names = ["Alice", "John", "Peter", "Bob", "Tom", "Anna", "Michael", "David", "Lucy", "Sara"]
 capitals = ["Paris", "Berlin", "Washington", "Ankara", "Rome", "Madrid", "Toronto", "London", "Tokyo", "Lima"]
 countries = ["France", "Germany", "USA", "Turkey", "Italy", "Spain", "Canada", "UK", "Japan", "Chile"]
 # for corrupting the prompts
@@ -92,7 +92,7 @@ class HybridRetrievalDataset:
         corrupted_labels = []
 
         indices = list(range(len(names)))
-        for idx1, idx2, idx3, idx4 in zip(cycle(indices), cycle(indices[1:]), cycle(indices[2:]), cycle(indices[:4])):
+        for idx1, idx2, idx3, idx4 in zip(cycle(indices), cycle(indices[1:]), cycle(indices[2:]), cycle(indices[:3])):
             if len(corrupted_prompts) >= 20:
                 break
 
@@ -112,13 +112,13 @@ class HybridRetrievalDataset:
                 prompt = template3.format(
                     name1=names[idx1], country1=countries[idx1], capital1=capitals[idx1],
                     name2=names[idx2], country2=countries[idx2], capital2=capitals[idx2],
-                    name3=names[idx3], country3=countries[idx3]
+                    name3=names[idx3], country3=countries[idx3], capital3=capitals[idx1]
                 )
             else:
                 prompt = template4.format(
                     name1=names[idx1], country1=countries[idx1], capital1=capitals[idx1],
                     name2=names[idx2], country2=countries[idx2], capital2=capitals[idx2],
-                    name3=names[idx3], country3=countries[idx3]
+                    name3=names[idx3], country3=countries[idx3], capital3=capitals[idx2]
                 )
 
             label = names[idx3]
@@ -149,15 +149,20 @@ if __name__ == "__main__":
     print("Generated Prompts:\n")
     for prompt in clean_prompts:
         print(prompt)
-    print("\nGenerated Labels:")
-    for label in clean_labels:
-        print(label)
-    print("\nGenerated Wrong Labels:")
-    for wrong_label in wrong_labels:
-        print(wrong_label)
+    # print("\nGenerated Labels:")
+    # for label in clean_labels:
+    #     print(label)
+    # print("\nGenerated Wrong Labels:")
+    # for wrong_label in wrong_labels:
+    #     print(wrong_label)
     print("\nCorrupted Prompts:")
     for prompt in corrupted_prompts:
         print(prompt)
-    print("\nCorrupted Labels:")
-    for label in corrupted_labels:
-        print(label)
+    # print("\nCorrupted Labels:")
+    # for label in corrupted_labels:
+    #     print(label)
+    
+    # for prompt, label, wrong_label in zip(clean_prompts, clean_labels, wrong_labels):
+    #     print(f"Prompt: {prompt}\nLabel: {label}\nWrong Label: {wrong_label}\n")
+    # for prompt, label in zip(corrupted_prompts, corrupted_labels):
+    #     print(f"Corrupted Prompt: {prompt}\nLabel: {label}\n")
