@@ -17,6 +17,9 @@ THRESHOLDS=(0.05 0.1)
 # Iterate over each threshold value
 for i in "${!THRESHOLDS[@]}"; do
   THRESHOLD=${THRESHOLDS[$i]}
+  
+  # Create the local directory if it doesn't exist
+  mkdir -p $LOCAL_DIR
 
   # Define the log file path
   LOG_FILE="${LOCAL_DIR}/log${THRESHOLD}.txt"

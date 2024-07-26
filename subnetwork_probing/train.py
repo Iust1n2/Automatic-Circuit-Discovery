@@ -154,6 +154,7 @@ def correspondence_from_mask(model: HookedTransformer, nodes_to_mask: list[TLACD
 
 def log_plotly_bar_chart(x: List[str], y: List[float], save_dir: str, file_name: str) -> None:
     import plotly.graph_objects as go
+    save_dir = args.save_dir
     # Ensure the save directory exists
     os.makedirs(save_dir, exist_ok=True)
     
@@ -169,7 +170,7 @@ def log_plotly_bar_chart(x: List[str], y: List[float], save_dir: str, file_name:
 
 
 
-def visualize_mask(model: HookedTransformer) -> tuple[int, list[TLACDCInterpNode]]:
+def visualize_mask(model: HookedTransformer, save_dir: str) -> tuple[int, list[TLACDCInterpNode]]:
     number_of_heads = model.cfg.n_heads
     number_of_layers = model.cfg.n_layers
     node_name_list = []
@@ -216,9 +217,8 @@ def visualize_mask(model: HookedTransformer) -> tuple[int, list[TLACDCInterpNode
         mask_scores_for_names.append(mask_sample)
         if mask_sample < 0.5:
             nodes_to_mask.append(node)
-
     # assert len(mask_scores_for_names) == 3 * number_of_heads * number_of_layers
-    log_plotly_bar_chart(x=node_name_list, y=mask_scores_for_names, save_dir="subnetwork_probing/mask_scores", file_name="mask_scores.png")
+    log_plotly_bar_chart(x=node_name_list, y=mask_scores_for_names, save_dir=save_dir, file_name="mask_scores.png")
     node_count = total_nodes - len(nodes_to_mask)
     return node_count, nodes_to_mask
 
@@ -268,11 +268,11 @@ def do_zero_caching(model: HookedTransformer) -> None:
 def train_kbicr(
     args,
     kbicr_model: HookedTransformer,
+    save_path: str,
     all_task_things
 ):
     epochs = args.epochs
     lambda_reg = args.lambda_reg
-
 
     print('lambda reg', lambda_reg)
 
@@ -323,7 +323,7 @@ def train_kbicr(
 
         trainer.step()
 
-    number_of_nodes, nodes_to_mask = visualize_mask(kbicr_model)
+    number_of_nodes, nodes_to_mask = visualize_mask(kbicr_model, save_dir=save_path)
     # wandb.log(
     #     {
     #         "regularisation_loss": regularizer_term.item(),
@@ -360,7 +360,7 @@ def train_kbicr(
                     do_random_resample_caching(kbicr_model, all_task_things.test_patch_data)
                 test_specific_metric_term += fn(kbicr_model(all_task_things.test_data)).item()
             test_specific_metrics[f"test_{k}"] = test_specific_metric_term
-            print(f"Final test metric: {test_specific_metric_term:.4f}")
+            print(f"Final test metric {k}: {test_specific_metric_term:.4f}")
 
         to_log_dict = dict(
             number_of_nodes=number_of_nodes,
@@ -587,6 +587,12 @@ if __name__ == "__main__":
         if kwarg_string in kwargs:
             del kwargs[kwarg_string]
 
+    save_dir = Path(args.save_dir)
+    lr = args.lr
+    os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery/subnetwork_probing') 
+    save_path = f"{save_dir}/{args.task}_lr_{lr}_lambda_reg_{args.lambda_reg}" 
+    os.makedirs(save_path, exist_ok=True)
+
     cfg = HookedTransformerConfig(**kwargs)
     model = HookedTransformer(cfg, is_masked=True)
 
@@ -608,6 +614,7 @@ if __name__ == "__main__":
     model, to_log_dict = train_kbicr(
         args=args,
         kbicr_model=model,
+        save_path=save_path,
         all_task_things=all_task_things,
     )
 
@@ -622,12 +629,6 @@ if __name__ == "__main__":
     to_log_dict["percentage_binary"] = percentage_binary
     print(to_log_dict)
 
-    save_dir = Path(args.save_dir)
-    lr = args.lr
-    lambda_reg = args.lambda_reg
-    os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery/subnetwork_probing') 
-    save_path = f"{save_dir}/{args.task}_lr_{lr}_lambda_reg_{lambda_reg}" 
-    os.makedirs(save_path, exist_ok=True)
     # Save to JSON
     with open(f'{save_path}/results.json', 'w') as f:
         json.dump(to_log_dict, f)
