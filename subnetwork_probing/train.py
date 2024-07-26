@@ -154,7 +154,6 @@ def correspondence_from_mask(model: HookedTransformer, nodes_to_mask: list[TLACD
 
 def log_plotly_bar_chart(x: List[str], y: List[float], save_dir: str, file_name: str) -> None:
     import plotly.graph_objects as go
-    save_dir = args.save_dir
     # Ensure the save directory exists
     os.makedirs(save_dir, exist_ok=True)
     
@@ -587,11 +586,10 @@ if __name__ == "__main__":
         if kwarg_string in kwargs:
             del kwargs[kwarg_string]
 
-    save_dir = Path(args.save_dir)
     lr = args.lr
     os.chdir('/home/iustin/Mech-Interp/Automatic-Circuit-Discovery/subnetwork_probing') 
-    save_path = f"{save_dir}/{args.task}_lr_{lr}_lambda_reg_{args.lambda_reg}" 
-    os.makedirs(save_path, exist_ok=True)
+    save_dir = f"{args.save_dir}/{args.task}_lr_{lr}_lambda_reg_{args.lambda_reg}" 
+    os.makedirs(save_dir, exist_ok=True)
 
     cfg = HookedTransformerConfig(**kwargs)
     model = HookedTransformer(cfg, is_masked=True)
@@ -614,7 +612,7 @@ if __name__ == "__main__":
     model, to_log_dict = train_kbicr(
         args=args,
         kbicr_model=model,
-        save_path=save_path,
+        save_path=save_dir,
         all_task_things=all_task_things,
     )
 
@@ -630,7 +628,7 @@ if __name__ == "__main__":
     print(to_log_dict)
 
     # Save to JSON
-    with open(f'{save_path}/results.json', 'w') as f:
+    with open(f'{save_dir}/results.json', 'w') as f:
         json.dump(to_log_dict, f)
     # wandb.log(to_log_dict)
     # # sanity_check_with_transformer_lens(mask_val_dict)
