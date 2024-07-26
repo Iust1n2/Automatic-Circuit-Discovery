@@ -13,7 +13,7 @@ import re
 import copy
 from itertools import cycle, islice
 
-names = ["Alice", "John", "Peter", "Bob", "Tom", "Anna", "Michael", "David", "Lucy", "Sara"]
+names = ["Alice", "John", "Peter", "Bob", "Tom", "Anna", "Michael", "David"]
 capitals = ["Paris", "Berlin", "Washington", "Ankara", "Rome", "Madrid", "Toronto", "London", "Tokyo", "Lima"]
 countries = ["France", "Germany", "USA", "Turkey", "Italy", "Spain", "Canada", "UK", "Japan", "Chile"]
 # for corrupting the prompts
@@ -155,14 +155,14 @@ if __name__ == "__main__":
     # print("\nGenerated Wrong Labels:")
     # for wrong_label in wrong_labels:
     #     print(wrong_label)
-    print("\nCorrupted Prompts:")
-    for prompt in corrupted_prompts:
-        print(prompt)
+    # print("\nCorrupted Prompts:")
+    # for prompt in corrupted_prompts:
+    #     print(prompt)
     # print("\nCorrupted Labels:")
     # for label in corrupted_labels:
     #     print(label)
     
-    # for prompt, label, wrong_label in zip(clean_prompts, clean_labels, wrong_labels):
-    #     print(f"Prompt: {prompt}\nLabel: {label}\nWrong Label: {wrong_label}\n")
-    # for prompt, label in zip(corrupted_prompts, corrupted_labels):
-    #     print(f"Corrupted Prompt: {prompt}\nLabel: {label}\n")
+    for prompt, label, wrong_label in zip(clean_prompts, clean_labels, wrong_labels):
+        print(f"Prompt: {prompt}\nLabel: {label}\nWrong Label: {wrong_label}\n")
+    for prompt, label in zip(corrupted_prompts, corrupted_labels):
+        print(f"Corrupted Prompt: {prompt}\nLabel: {label}\n")
