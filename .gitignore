@@ -8,6 +8,17 @@ acdc/hybridretrieval/combined_tgf/
 subnetwork_probing/mask_scores/
 subnetwork_probing/logs/
 subnetwork_probing/results/
+acdc/hybridretrieval/datasets/join_direct.py
+acdc/hybridretrieval/datasets/join_indirect.py
+acdc/hybridretrieval/datasets/kbicr_indirect.py
+acdc/hybridretrieval/datasets/kbicr_direct.py
+acdc/hybridretrieval/datasets/knowledge_retrieval_direct.py
+acdc/hybridretrieval/datasets/knowledge_retrieval_indirect.py
+acdc/hybridretrieval/datasets/join_template_indirect.py
+acdc/hybridretrieval/datasets/kbicr_template_indirect_old.py
+acdc/hybridretrieval/load_circuit_model.ipynb
+acdc/hybridretrieval/combined_tgf/
+acdc/hybridretrieval/graph_utils/
 
 out.txt
 out2.txt
@@ -71,4 +82,3 @@ pts/
 **/.DS_Store
 
 ob-jupyter
-
