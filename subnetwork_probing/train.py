@@ -165,6 +165,14 @@ def log_plotly_bar_chart(x: List[str], y: List[float], save_dir: str, file_name:
     
     # Save the plot as an image
     fig.write_image(file_path)
+    
+    # Save indexes x and y in a json file
+    data = {"x": x, "y": y}
+    json_file_path = os.path.join(save_dir, "mask_scores.json")
+    with open(json_file_path, "w") as json_file:
+        json.dump(data, json_file)
+
+    
     # wandb.log({"mask_scores": fig})
 
 
