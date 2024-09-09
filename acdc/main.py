@@ -240,7 +240,7 @@ DATASET = args.dataset
 METRIC = args.metric
 
 # Setup the save path for the run as well as the log path for metrics
-save_path = f"acdc/{LOCAL_DIR}/{DATASET}_{METRIC}_{THRESHOLD}"
+save_path = f"acdc/{LOCAL_DIR}/{DATASET}/{METRIC}_{THRESHOLD}"
 log_path = f"{save_path}/logs"
 os.makedirs(save_path, exist_ok=True)
 os.makedirs(log_path, exist_ok=True)

@@ -12,7 +12,7 @@ import warnings
 import numpy as np
 
 # change path to root directory to load gpt-2 stuff 
-os.chdir("/home/iustin/Mech-Interp/~")
+os.chdir("/home/iustin/Mech-Interp/Automatic-Circuit-Discovery")
 
 NAMES = [
     "Alice",

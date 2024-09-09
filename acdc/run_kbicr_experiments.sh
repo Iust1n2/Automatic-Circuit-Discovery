@@ -9,10 +9,10 @@ FIRST_CACHE_CPU="False"
 SECOND_CACHE_CPU="False"
 MAX_NUM_EPOCHS=100000
 LOCAL_DIR="hybridretrieval/acdc_results"
-DATASET="kbicr_indirect"
+DATASET="kbicr"
 
 # Multiple thresholds to test
-THRESHOLDS=(0.05 0.1)
+THRESHOLDS=(0.01)
 
 # Iterate over each threshold value
 for i in "${!THRESHOLDS[@]}"; do
@@ -25,7 +25,7 @@ for i in "${!THRESHOLDS[@]}"; do
   LOG_FILE="${LOCAL_DIR}/log${THRESHOLD}.txt"
   
   # Run the experiment
-  python main.py --task $TASK $ZERO_ABLATION --metric $METRIC --threshold $THRESHOLD --indices-mode $INDICES_MODE --first-cache-cpu $FIRST_CACHE_CPU --second-cache-cpu $SECOND_CACHE_CPU --max-num-epochs $MAX_NUM_EPOCHS --local-dir $LOCAL_DIR --dataset $DATASET > $LOG_FILE 2>&1 &
+  python main.py --task $TASK --metric $METRIC --threshold $THRESHOLD --indices-mode $INDICES_MODE --first-cache-cpu $FIRST_CACHE_CPU --second-cache-cpu $SECOND_CACHE_CPU --max-num-epochs $MAX_NUM_EPOCHS --local-dir $LOCAL_DIR --dataset $DATASET > $LOG_FILE 2>&1 &
   
   echo "Started experiment with threshold $THRESHOLD, logging to $LOG_FILE"
 done
