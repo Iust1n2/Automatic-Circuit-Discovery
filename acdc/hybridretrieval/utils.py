@@ -59,20 +59,6 @@ def get_hybrid_retrieval_gpt2_small(device="cuda"):
     """For backwards compat"""
     return get_gpt2_small(device=device)
 
-def get_model(device):
-    tl_model = HookedTransformer.from_pretrained(
-        "gpt2-small",  # load gpt-2 small
-        center_writing_weights=False,
-        center_unembed=False,
-        fold_ln=False,
-        device=device,
-    )
-
-    # standard ACDC options
-    tl_model.set_use_attn_result(True)
-    tl_model.set_use_split_qkv_input(True) 
-    return tl_model
-
 def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return_one_element=True):
     tl_model = get_gpt2_small(device=device)
 
