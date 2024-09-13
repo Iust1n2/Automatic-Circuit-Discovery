@@ -3,7 +3,7 @@
 # Define the common parameters
 TASK="hybrid-retrieval"
 ZERO_ABLATION="--zero-ablation"
-METRIC="kl_div"
+METRIC="logit_diff"
 INDICES_MODE="reverse"
 FIRST_CACHE_CPU="False"
 SECOND_CACHE_CPU="False"
@@ -12,7 +12,7 @@ LOCAL_DIR="hybridretrieval/acdc_results"
 DATASET="kbicr"
 
 # Multiple thresholds to test
-THRESHOLDS=(0.01)
+THRESHOLDS=(0.05 0.125)
 
 # Iterate over each threshold value
 for i in "${!THRESHOLDS[@]}"; do

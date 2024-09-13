@@ -207,7 +207,7 @@ def show(
 
         g.write(path=base_fname + ".gv")
 
-        if not fname.endswith(".gv"): # turn the .gv file into a .png file
+        if not str(fname).endswith(".gv"): # turn the .gv file into a .png file
             g.draw(path=fname, prog="dot")
 
     return g

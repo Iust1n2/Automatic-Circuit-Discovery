@@ -669,11 +669,11 @@ class TLACDCExperiment:
                 else:
                    log_metrics_locally(
                         self,
-                        current_metric=self.cur_metric,
+                        current_metric=self.cur_metric, # old metric
                         parent_name=str(self.corr.graph[sender_name][sender_index]),
                         child_name=str(self.current_node),
-                        evaluated_metric=evaluated_metric,
-                        result=result,
+                        evaluated_metric=evaluated_metric, # new metric
+                        result=result, # new metric - old metric
                         times=time.time(),
                     )
 
