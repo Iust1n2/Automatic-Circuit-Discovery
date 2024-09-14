@@ -331,6 +331,10 @@ def train_kbicr(
         trainer.step()
 
     number_of_nodes, nodes_to_mask = visualize_mask(kbicr_model, save_dir=save_path)
+    print(f"Regularizer term: {regularizer_term.item()}")
+    print(f"Specific metric term: {specific_metric_term.item()}")
+    print(f"Loss: {loss.item()}")
+         
     # wandb.log(
     #     {
     #         "regularisation_loss": regularizer_term.item(),
@@ -367,7 +371,8 @@ def train_kbicr(
                     do_random_resample_caching(kbicr_model, all_task_things.test_patch_data)
                 test_specific_metric_term += fn(kbicr_model(all_task_things.test_data)).item()
             test_specific_metrics[f"test_{k}"] = test_specific_metric_term
-            print(f"Final test metric {k}: {test_specific_metric_term:.4f}")
+
+        print(f"Final test metric {k}: {test_specific_metric_term:.4f}")
 
         to_log_dict = dict(
             number_of_nodes=number_of_nodes,
@@ -633,6 +638,7 @@ if __name__ == "__main__":
     to_log_dict["nodes_to_mask"] = list(map(str, to_log_dict["nodes_to_mask"]))
     to_log_dict["number_of_edges"] = corr.count_no_edges()
     to_log_dict["percentage_binary"] = percentage_binary
+    to_log_dict["mask_val_dict"] = mask_val_dict
     print(to_log_dict)
 
     # Save to JSON
