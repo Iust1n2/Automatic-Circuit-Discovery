@@ -8,6 +8,7 @@ acdc/hybridretrieval/combined_tgf/
 subnetwork_probing/mask_scores/
 subnetwork_probing/logs/
 subnetwork_probing/results/
+subnetwork_probing/garbage/
 acdc/hybridretrieval/datasets/join_direct.py
 acdc/hybridretrieval/datasets/join_indirect.py
 acdc/hybridretrieval/datasets/kbicr_indirect.py
