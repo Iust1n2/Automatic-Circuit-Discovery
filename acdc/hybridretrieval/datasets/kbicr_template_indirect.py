@@ -111,7 +111,7 @@ def corrupt_prompts(prompts, seed=None):
 
 # {name1} lives in {country1}, {capital1} - {name1}, {NON_S1} lives in {country2}, {capital2} - {NON_S2}, {S1} lives in {country3}, {capital3} - {S2}
 
-def get_name_idxs(prompts, tokenizer, idx_types=["NON_S", "S", "S2"], prepend_bos=False):
+def get_name_idxs(prompts, tokenizer, idx_types=["NON_S", "NON_S2", "S"], prepend_bos=False):
     name_idx_dict = dict((idx_type, []) for idx_type in idx_types)
     double_s2 = False
     for prompt in prompts:
@@ -129,11 +129,11 @@ def get_name_idxs(prompts, tokenizer, idx_types=["NON_S", "S", "S2"], prepend_bo
             else:
                 idx = toks.index(tokenizer.tokenize(" " + prompt[idx_type])[0])
             name_idx_dict[idx_type].append(idx)
-        if "S" in idx_types and "S2" in idx_types:
-            if name_idx_dict["S"][-1] == name_idx_dict["S2"][-1]:
+        if "NON_S" in idx_types and "NON_S2" in idx_types:
+            if name_idx_dict["NON_S"][-1] == name_idx_dict["NON_S2"][-1]:
                 double_s2 = True
     if double_s2:
-        warnings.warn("S2 index has been computed as the same for S and S2")
+        warnings.warn("NON_S2 index has been computed as the same for NON_S and NON_S2")
 
     return [
         int(prepend_bos) + torch.tensor(name_idx_dict[idx_type])
@@ -212,8 +212,8 @@ def get_end_idxs(prompts, tokenizer, name_tok_len=1, prepend_bos=False, toks=Non
 
 ALL_SEM = [
     "NON_S",
+    "NON_S2",
     "S",
-    "S2",
     "-",
     "S+1",
     "end",
@@ -221,10 +221,10 @@ ALL_SEM = [
 
 
 def get_idx_dict(prompts, tokenizer, prepend_bos=False, toks=None):
-    (NON_S_idxs, S1_idxs, S2_idxs,) = get_name_idxs(
+    (NON_S_idxs, NON_S2_idxs, S_idxs,) = get_name_idxs(
         prompts,
         tokenizer,
-        idx_types=["NON_S", "S", "S2"],
+        idx_types=["NON_S", "NON_S2", "S"],
         prepend_bos=prepend_bos,
     )
 
@@ -238,15 +238,15 @@ def get_idx_dict(prompts, tokenizer, prepend_bos=False, toks=None):
 
     punct_idxs = get_word_idxs(prompts, [",", "."], tokenizer)
     dash_idxs = get_word_idxs(prompts, [" -"], tokenizer)
-    # TODO: check if indices are correctly indexed 
     return {
         "NON_S": NON_S_idxs,
-        "NON_S-1": NON_S_idxs - 1,
-        "NON_S+1": NON_S_idxs + 1,
-        "S": S1_idxs,
-        "S-1": S1_idxs - 1,
-        "S+1": S1_idxs + 1,
-        "S2": S2_idxs,
+        "NON_S_country": NON_S_idxs + 3,
+        "NON_S_capital": NON_S_idxs + 5,
+        "NON_S2": NON_S2_idxs,
+        "NON_S2-1": NON_S2_idxs - 1,
+        "S": S_idxs,
+        "S_country": S_idxs + 3,
+        "S_capital": S_idxs + 5,
         "end": end_idxs,
         "-": dash_idxs,
         "starts": torch.zeros_like(end_idxs),
@@ -407,3 +407,5 @@ if __name__ == "__main__":
     print(dataset.prompts)
     # print(corr_dataset.prompts)
     print(dataset.groups)    
+    
+    dataset.word_idx
