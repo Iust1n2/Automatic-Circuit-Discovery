@@ -1,5 +1,5 @@
 # Majority of the code is taken from the ioi_dataset.py script, 
-# only the gen_prompts and corrupt_prompts functions differ because the task is inherently different.
+# only the gen_prompts and corrupt_prompts functions differ.
 
 import random
 from typing import Tuple, List
@@ -33,7 +33,9 @@ COUNTRY_CAPITAL_PAIRS = [
     ('France', 'Paris'),
     ]
 
-TEMPLATE =  "{name1} lives in {country1}, {capital1} - {name1}, {name2} lives in {country2}, {capital2} - {name2}, {name3} lives in {country3}, {capital3} - {name3}"
+TEMPLATE1 =  "{name1} lives in {country1}, {capital1} - {name1}, {name2} lives in {country2}, {capital2} - {name2}, {name3} lives in {country3}, {capital3} - {name3}"
+
+TEMPLATE2 = "{name1} lives in {country1}, {name2} lives in {country2}, {name3} lives in {country3}, {capital1} - {name1}, {capital2} - {name2}, {capital3} - {name3}"
 
 def gen_prompts(names, template, country_capital_pairs, N, prefixes=None, seed=None):
     
@@ -76,7 +78,7 @@ def gen_prompts(names, template, country_capital_pairs, N, prefixes=None, seed=N
         kbicr_prompt["S"] = name3
         kbicr_prompt["NON_S"] = name2
         kbicr_prompt["correct_label"] = " " + name3 
-        kbicr_prompt["wrong_label"] = " " + name2 # or country_3
+        kbicr_prompt["wrong_label"] = " " + name2 
         kbicr_prompt["TEMPLATE_IDX"] = temp_id
         prompts.append(kbicr_prompt)
 
@@ -110,6 +112,8 @@ def corrupt_prompts(prompts, seed=None):
 # *Tok Idxs Methods
 
 # {name1} lives in {country1}, {capital1} - {name1}, {NON_S1} lives in {country2}, {capital2} - {NON_S2}, {S1} lives in {country3}, {capital3} - {S2}
+
+# {name1} lives in {country1}, {NON_S1} lives in {country2}, {S1} lives in {country3}, {capital1} - {name1}, {capital2} - {NON_S2}, {capital3} - {S2}
 
 def get_name_idxs(prompts, tokenizer, idx_types=["NON_S", "NON_S2", "S"], prepend_bos=False):
     name_idx_dict = dict((idx_type, []) for idx_type in idx_types)
@@ -260,6 +264,7 @@ class KBICRDataset:
         prefixes=None, 
         N=20, 
         tokenizer=None, 
+        template=None,
         kbicr_prompts_for_word_idxs=None,
         prepend_bos=False, 
         manual_word_idx=None,
@@ -277,7 +282,7 @@ class KBICRDataset:
 
         self.prefixes = prefixes
         if prompts is None:
-            self.prompts = gen_prompts(NAMES, TEMPLATE, COUNTRY_CAPITAL_PAIRS, N=N, prefixes=self.prefixes, seed=seed)
+            self.prompts = gen_prompts(NAMES, template, COUNTRY_CAPITAL_PAIRS, N=N, prefixes=self.prefixes, seed=seed)
         else:
             assert N == len(prompts), f"{N} and {len(prompts)}"
             self.prompts = prompts
@@ -401,7 +406,7 @@ class KBICRDataset:
 
 # testing
 if __name__ == "__main__":
-    dataset = KBICRDataset(N=1, seed=42)
+    dataset = KBICRDataset(N=1, template=TEMPLATE2,seed=42)
     corr_dataset = dataset.gen_corrupted_dataset(seed=42)
 
     print(dataset.prompts)
