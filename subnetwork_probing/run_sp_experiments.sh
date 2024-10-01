@@ -3,7 +3,7 @@
 # Define the variables
 TASK="hybrid-retrieval"
 LR="0.01"
-LAMBDA_REG="150"
+LAMBDA_REG="300" # 1 5 10 50 100 150 200 300 
 SAVE_DIR="results"
 LOG_FILE="logs/log_kbicr_lr_${LR}_lambda_${LAMBDA_REG}.txt"
 

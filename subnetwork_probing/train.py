@@ -17,6 +17,7 @@ from acdc.hybridretrieval.utils import (
     get_all_hybrid_retrieval_things,
     get_gpt2_small
 )
+from acdc.hybridretrieval.datasets.kbicr_template_indirect import KBICRDataset
 from acdc.greaterthan.utils import get_all_greaterthan_things
 from acdc.ioi.utils import get_all_ioi_things
 import huggingface_hub
@@ -384,19 +385,81 @@ def train_kbicr(
     return kbicr_model, to_log_dict
 
 
+def handle_all_and_std(returning, all, std):
+    """
+    For use by the below functions. Lots of options!!!
+    """
+
+    if all and not std:
+        return returning
+    if std:
+        if all:
+            first_bit = (returning).detach().cpu()
+        else:
+            first_bit = (returning).mean().detach().cpu()
+        return first_bit, torch.std(returning).detach().cpu()
+    return (returning).mean().detach().cpu()
+
+def logit_diff(
+    model,
+    kbicr_dataset,
+    all=False,
+    std=False,
+    both=False,
+):  # changed by Arthur to take dataset object, :pray: no big backwards compatibility issues
+    """
+    Difference between the IO and the S logits at the "to" token
+    """
+
+    logits = model(kbicr_dataset.toks.long()).detach()
+
+    NON_S_logits = logits[
+        torch.arange(len(kbicr_dataset)),
+        kbicr_dataset.word_idx["end"],
+        kbicr_dataset.non_s_tokenIDs,
+    ]
+    S_logits = logits[
+        torch.arange(len(kbicr_dataset)),
+        kbicr_dataset.word_idx["end"],
+        kbicr_dataset.s_tokenIDs,
+    ]
+
+    if both:
+        return handle_all_and_std(NON_S_logits, all, std), handle_all_and_std(
+            S_logits, all, std
+        )
+
+    else:
+        return handle_all_and_std(S_logits - NON_S_logits, all, std)
+
+
+def logits_to_ave_logit_diff_2(logits, dataset: KBICRDataset, per_prompt=False):
+    '''
+    Returns logit difference between the correct and incorrect answer.
+
+    If per_prompt=True, return the array of differences rather than the average.
+    '''
+
+    # Only the final logits are relevant for the answer
+    # Get the logits corresponding to the indirect object / subject tokens respectively
+    non_s_logits = logits[torch.arange(len(dataset)),dataset.word_idx["end"],dataset.non_s_tokenIDs]
+    s_logits = logits[torch.arange(len(dataset)),dataset.word_idx["end"],dataset.s_tokenIDs]
+    # Find logit difference
+    answer_logit_diff = s_logits - non_s_logits 
+    return answer_logit_diff if per_prompt else answer_logit_diff.mean()
+
 # check regularizer can set all the
 def sanity_check_with_transformer_lens(mask_dict):
-    ioi_dataset = IOIDataset(prompt_type="ABBA", N=N, nb_templates=1)
-    train_data = ioi_dataset.toks.long()
-    model = HookedTransformer.from_pretrained(is_masked=False, model_name="model")
+    kbicr_dataset = KBICRDataset(N=20, seed=42)
+    train_data = kbicr_dataset.toks.long()
+    model = HookedTransformer.from_pretrained(is_masked=False, model_name="gpt2")
     model.freeze_weights()
-    logits = model(train_data)
-    logit_diff = logit_diff_from_ioi_dataset(logits, train_data, mean=True)
+    logit_difference = logit_diff(model, kbicr_dataset)
 
     fwd_hooks = make_forward_hooks(mask_dict)
     logits = model.run_with_hooks(train_data, return_type="logits", fwd_hooks=fwd_hooks)
-    logit_diff_masked = logit_diff_from_ioi_dataset(logits, train_data, mean=True)
-    print("original logit diff", logit_diff)
+    logit_diff_masked = logits_to_ave_logit_diff_2(logits, kbicr_dataset)
+    print("original logit diff", logit_difference)
     print("masked logit diff", logit_diff_masked)
 
 
@@ -473,7 +536,7 @@ parser.add_argument("--reset-subject", type=int, default=0)
 parser.add_argument("--save_dir", type=str, help="Directory to save results")
 parser.add_argument("--seed", type=int, default=random.randint(0, 2**31 - 1), help="Random seed (default: random)")
 parser.add_argument("--num-examples", type=int, default=20)
-parser.add_argument("--seq-len", type=int, default=29)
+parser.add_argument("--seq-len", type=int, default=25)
 parser.add_argument("--n-loss-average-runs", type=int, default=20)
 parser.add_argument("--task", type=str, required=True)
 parser.add_argument("--torch-num-threads", type=int, default=0, help="How many threads to use for torch (0=all)")
@@ -645,5 +708,5 @@ if __name__ == "__main__":
     with open(f'{save_dir}/results.json', 'w') as f:
         json.dump(to_log_dict, f)
     # wandb.log(to_log_dict)
-    # # sanity_check_with_transformer_lens(mask_val_dict)
+    sanity_check_with_transformer_lens(mask_val_dict)
     # wandb.finish()
