@@ -20,6 +20,8 @@ acdc/hybridretrieval/datasets/kbicr_template_indirect_old.py
 acdc/hybridretrieval/load_circuit_model.ipynb
 acdc/hybridretrieval/combined_tgf/
 acdc/hybridretrieval/graph_utils/
+acdc/run_analysis.ipynb
+acdc_vs_sp_scores.tsv
 
 out.txt
 out2.txt
@@ -82,4 +84,4 @@ pts/
 .pylintrc
 **/.DS_Store
 
-ob-jupyter
+ob-jupyterrun_analysis.ipynb
