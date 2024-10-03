@@ -244,11 +244,13 @@ def get_idx_dict(prompts, tokenizer, prepend_bos=False, toks=None):
     dash_idxs = get_word_idxs(prompts, [" -"], tokenizer)
     return {
         "NON_S": NON_S_idxs,
+        "NON_S+1": NON_S_idxs + 1,
         "NON_S_country": NON_S_idxs + 3,
         "NON_S_capital": NON_S_idxs + 5,
         "NON_S2": NON_S2_idxs,
         "NON_S2-1": NON_S2_idxs - 1,
         "S": S_idxs,
+        "S+1": S_idxs + 1,
         "S_country": S_idxs + 3,
         "S_capital": S_idxs + 5,
         "end": end_idxs,

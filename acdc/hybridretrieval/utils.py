@@ -26,7 +26,7 @@ import IPython
 from acdc.acdc_utils import MatchNLLMetric, frac_correct_metric, logit_diff_metric, kl_divergence, negative_log_probs
 import torch
 from acdc.docstring.utils import AllDataThings
-from acdc.hybridretrieval.datasets.kbicr_template_indirect import KBICRDataset
+from acdc.hybridretrieval.datasets.kbicr_template_indirect import KBICRDataset, TEMPLATE1
 from tqdm import tqdm
 import wandb
 from transformer_lens.HookedTransformer import HookedTransformer
@@ -62,7 +62,7 @@ def get_hybrid_retrieval_gpt2_small(device="cuda"):
 def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return_one_element=True):
     tl_model = get_gpt2_small(device=device)
 
-    clean_dataset = KBICRDataset(N=num_examples*2, seed=42)
+    clean_dataset = KBICRDataset(N=num_examples*2, template=TEMPLATE1, seed=42)
     corr_dataset = clean_dataset.gen_corrupted_dataset(seed=42)
 
     seq_len = clean_dataset.toks.shape[1]
@@ -156,49 +156,27 @@ def get_all_hybrid_retrieval_things(num_examples, device, metric_name, kl_return
         test_patch_data=test_patch_data
     )
 
+# first iteration
+# CIRCUIT = { 
+#     "name mover": [(9, 9), (8, 11), (9, 6), (10, 0)],
+#     "backup name mover": [(10, 6), (10, 10)],
+#     "negative name mover": [(10, 7), (11, 10), (11, 6)],
+#     "country-capital mover": [(9, 8)],
+#     "induction": [(5, 5), (5, 1), (6, 9), (7, 10), (7, 2)],
+#     "duplicate token": [(0, 5), (3, 0), (0, 1)],
+#     "previous token": [(4, 11), (3, 7), (6, 8), (2, 2)],
+# }
 
 CIRCUIT = {
-    "name mover": [(8, 11), (9, 6), (9, 9), (10, 0)],
-    # "backup name mover": [(10, 10), (10, 6), (10, 2), (10, 1), (11, 2), (9, 7), (9, 0), (11, 9)],
-    "negative name mover": [(10, 7), (11, 10)],
+    "name mover": [(9, 9), (8, 11), (9, 6), (10, 0)],
+    "backup name mover": [(10, 6), (10, 10), (11, 2), (11, 1), (11, 6)],
+    "negative name mover": [(10, 7), (11, 10), (11, 6)],
     "country-capital mover": [(9, 8)],
-    # "s2 inhibition": [(7, 3), (7, 9), (8, 6), (8, 10)],
-    "induction": [(4, 11), (5, 5), (6, 9), (10, 7)],
-    "duplicate token": [(0, 1), (0, 10), (3, 0)],
+    "non-s inhibition": [(8, 10), (7, 7)],
+    "induction": [(5, 5), (5, 1), (7, 1), (7, 10), (6, 9)],
+    "duplicate token": [(0, 10), (1, 11), (0, 5), (3, 0), (0, 1)],
     "previous token": [(2, 2), (4, 11)],
 }
-
-GROUP_COLORS = {
-    "name mover": "#d7f8ee",
-    "negative name mover": "#fee7d5",
-    "country-capital mover": "#fee7d5",
-    "induction": "#fff6db",
-    "duplicate token": "#fad6e9",
-    "previous token": "#f9ecd7",
-}
-
-MLP_COLOR = "#f0f0f0"
-
-def kbicr_group_colorscheme():
-    assert set(GROUP_COLORS.keys()) == set(CIRCUIT.keys())
-
-    scheme = {
-        "embed": "#cbd5e8",
-        "<resid_post>": "#fff2ae",
-    }
-
-    for i in range(12):
-        scheme[f"<m{i}>"] = MLP_COLOR
-
-    for k, heads in CIRCUIT.items():
-        for (layer, head) in heads:
-            if head is None:
-                scheme[f"<m{layer}>"] = GROUP_COLORS[k]
-            else:
-                for qkv in ["", "_q", "_k", "_v"]:
-                    scheme[f"<a{layer}.{head}{qkv}>"] = GROUP_COLORS[k]
-    return scheme
-
 
 @dataclass(frozen=True)
 class Conn:
@@ -209,7 +187,7 @@ class Conn:
 def get_kbicr_true_edges(model):
     all_groups_of_nodes = [group for _, group in CIRCUIT.items()]
     all_nodes = [node for group in all_groups_of_nodes for node in group]
-    assert len(all_nodes) == 16, len(all_nodes)
+    assert len(all_nodes) == 27, len(all_nodes)
 
     nodes_to_mask = []
 
@@ -243,19 +221,21 @@ def get_kbicr_true_edges(model):
     special_connections: set[Conn] = {
         Conn("INPUT", "previous token", ("q", "k", "v")),
         Conn("INPUT", "duplicate token", ("q", "k", "v")),
-        # Conn("INPUT", "s2 inhibition", ("q",)),
+        Conn("INPUT", "non-s inhibition", ("q",)),
+        Conn("INPUT", "country-capital mover", ("k", "v")),
         Conn("INPUT", "negative name mover", ("k", "v")),
         Conn("INPUT", "name mover", ("k", "v")),
-        # Conn("INPUT", "backup name mover", ("k", "v")),
+        Conn("INPUT", "backup name mover", ("k", "v")),
         Conn("previous token", "induction", ("k", "v")),
-        # Conn("induction", "s2 inhibition", ("k", "v")),
-        # Conn("duplicate token", "s2 inhibition", ("k", "v")),
-        # Conn("s2 inhibition", "negative", ("q",)),
-        # Conn("s2 inhibition", "name mover", ("q",)),
-        # Conn("s2 inhibition", "backup name mover", ("q",)),
+        Conn("induction", "non-s inhibition", ("k", "v")),
+        Conn("duplicate token", "non-s inhibition", ("k", "v")),
+        Conn("non-s inhibition", "negative name mover", ("q",)),
+        Conn("non-s inhibition", "name mover", ("q",)),
+        Conn("non-s inhibition", "backup name mover", ("q",)),
         Conn("negative name mover", "OUTPUT", ()),
         Conn("name mover", "OUTPUT", ()),
-        # Conn("backup name mover", "OUTPUT", ()),
+        Conn("backup name mover", "OUTPUT", ()),
+        Conn("country-capital mover", "OUTPUT", ()),
     }
 
     for conn in special_connections:
@@ -284,6 +264,39 @@ def get_kbicr_true_edges(model):
 
     ret =  OrderedDict({(t[0], t[1].hashable_tuple, t[2], t[3].hashable_tuple): e.present for t, e in corr.all_edges().items() if e.present})
     return ret
+
+
+GROUP_COLORS = {
+    "name mover": "#d7f8ee",
+    "backup name mover": "#e7f2da",
+    "negative name mover": "#fee7d5",
+    "country-capital mover": "#ececf5",
+    "non-s inhibition": "#f9d9d7",
+    "induction": "#fff6db",
+    "duplicate token": "#fad6e9", 
+    "previous token": "#f9ecd7",
+}
+MLP_COLOR = "#f0f0f0"
+
+def kbicr_group_colorscheme():
+    assert set(GROUP_COLORS.keys()) == set(CIRCUIT.keys())
+
+    scheme = {
+        "embed": "#cbd5e8",
+        "<resid_post>": "#fff2ae",
+    }
+
+    for i in range(12):
+        scheme[f"<m{i}>"] = MLP_COLOR
+
+    for k, heads in CIRCUIT.items():
+        for (layer, head) in heads:
+            for qkv in ["", "_q", "_k", "_v"]:
+                scheme[f"<a{layer}.{head}{qkv}>"] = GROUP_COLORS[k]
+
+    for layer in range(12):
+        scheme[f"<m{layer}>"] = "#f0f0f0"
+    return scheme
 
 # testing
 def main():

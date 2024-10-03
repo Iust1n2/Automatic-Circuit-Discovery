@@ -18,10 +18,12 @@ acdc/hybridretrieval/datasets/knowledge_retrieval_indirect.py
 acdc/hybridretrieval/datasets/join_template_indirect.py
 acdc/hybridretrieval/datasets/kbicr_template_indirect_old.py
 acdc/hybridretrieval/load_circuit_model.ipynb
+acdc/hybridretrieval/datasets/kbicr_dataset.py
 acdc/hybridretrieval/combined_tgf/
 acdc/hybridretrieval/graph_utils/
 acdc/run_analysis.ipynb
 acdc_vs_sp_scores.tsv
+acdc_vs_sp_scores_old.tsv
 
 out.txt
 out2.txt
